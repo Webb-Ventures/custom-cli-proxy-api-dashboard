@@ -3,9 +3,11 @@
  */
 
 import { create } from 'zustand';
-import { getQuotaCacheFileName } from '@/utils/quota/identity';
+import { getQuotaCacheFileName, getQuotaCacheKey } from '@/utils/quota/identity';
 import type {
   AntigravityQuotaState,
+  AuthFileItem,
+  AuthFileQuotaObservation,
   ClaudeQuotaState,
   CodexQuotaState,
   DevinQuotaState,
@@ -28,6 +30,10 @@ interface QuotaStoreState {
   metaQuota: Record<string, MetaQuotaState>;
   pluginQuota: Record<string, PluginQuotaState>;
   xaiQuota: Record<string, XaiQuotaState>;
+  /** Passive header snapshots from the latest credentials list, by quota cache key. */
+  observedQuota: Record<string, AuthFileQuotaObservation>;
+  /** Local time each credential's quota was last actively fetched, by quota cache key. */
+  quotaCheckedAt: Record<string, number>;
   setAntigravityQuota: (updater: QuotaUpdater<Record<string, AntigravityQuotaState>>) => void;
   setClaudeQuota: (updater: QuotaUpdater<Record<string, ClaudeQuotaState>>) => void;
   setCodexQuota: (updater: QuotaUpdater<Record<string, CodexQuotaState>>) => void;
@@ -37,6 +43,9 @@ interface QuotaStoreState {
   setPluginQuota: (updater: QuotaUpdater<Record<string, PluginQuotaState>>) => void;
   setXaiQuota: (updater: QuotaUpdater<Record<string, XaiQuotaState>>) => void;
   clearQuotaCache: (names?: string[]) => void;
+  /** Replace passive snapshots from a credentials list; credentials not listed are dropped. */
+  syncObservedQuota: (files: AuthFileItem[]) => void;
+  markQuotaChecked: (keys: string[], atMs: number) => void;
 }
 
 const resolveUpdater = <T>(updater: QuotaUpdater<T>, prev: T): T => {
@@ -44,6 +53,26 @@ const resolveUpdater = <T>(updater: QuotaUpdater<T>, prev: T): T => {
     return (updater as (value: T) => T)(prev);
   }
   return updater;
+};
+
+/**
+ * Record when each credential last finished an active fetch: any entry that
+ * changed and landed on success or error. Covers the batch loader, single-card
+ * refresh, reset and background refresh without each having to remember.
+ */
+const stampCheckedAt = (
+  prev: Record<string, { status: string }>,
+  next: Record<string, { status: string }>,
+  checkedAt: Record<string, number>
+): Record<string, number> => {
+  let stamped = checkedAt;
+  const now = Date.now();
+  for (const [key, quota] of Object.entries(next)) {
+    if (quota === prev[key] || (quota.status !== 'success' && quota.status !== 'error')) continue;
+    if (stamped === checkedAt) stamped = { ...checkedAt };
+    stamped[key] = now;
+  }
+  return stamped;
 };
 
 export const useQuotaStore = create<QuotaStoreState>((set) => ({
@@ -57,10 +86,16 @@ export const useQuotaStore = create<QuotaStoreState>((set) => ({
   metaQuota: {},
   pluginQuota: {},
   xaiQuota: {},
+  observedQuota: {},
+  quotaCheckedAt: {},
   setAntigravityQuota: (updater) =>
-    set((state) => ({
-      antigravityQuota: resolveUpdater(updater, state.antigravityQuota),
-    })),
+    set((state) => {
+      const next = resolveUpdater(updater, state.antigravityQuota);
+      return {
+        antigravityQuota: next,
+        quotaCheckedAt: stampCheckedAt(state.antigravityQuota, next, state.quotaCheckedAt),
+      };
+    }),
   setClaudeQuota: (updater) =>
     set((state) => {
       const next = resolveUpdater(updater, state.claudeQuota);
@@ -89,30 +124,59 @@ export const useQuotaStore = create<QuotaStoreState>((set) => ({
           };
         }
       }
-      return { claudeQuota: retained };
+      return {
+        claudeQuota: retained,
+        quotaCheckedAt: stampCheckedAt(state.claudeQuota, retained, state.quotaCheckedAt),
+      };
     }),
   setCodexQuota: (updater) =>
-    set((state) => ({
-      codexQuota: resolveUpdater(updater, state.codexQuota),
-    })),
+    set((state) => {
+      const next = resolveUpdater(updater, state.codexQuota);
+      return {
+        codexQuota: next,
+        quotaCheckedAt: stampCheckedAt(state.codexQuota, next, state.quotaCheckedAt),
+      };
+    }),
   setDevinQuota: (updater) =>
-    set((state) => ({
-      devinQuota: resolveUpdater(updater, state.devinQuota),
-    })),
+    set((state) => {
+      const next = resolveUpdater(updater, state.devinQuota);
+      return {
+        devinQuota: next,
+        quotaCheckedAt: stampCheckedAt(state.devinQuota, next, state.quotaCheckedAt),
+      };
+    }),
   setKimiQuota: (updater) =>
-    set((state) => ({
-      kimiQuota: resolveUpdater(updater, state.kimiQuota),
-    })),
+    set((state) => {
+      const next = resolveUpdater(updater, state.kimiQuota);
+      return {
+        kimiQuota: next,
+        quotaCheckedAt: stampCheckedAt(state.kimiQuota, next, state.quotaCheckedAt),
+      };
+    }),
   setMetaQuota: (updater) =>
-    set((state) => ({ metaQuota: resolveUpdater(updater, state.metaQuota) })),
+    set((state) => {
+      const next = resolveUpdater(updater, state.metaQuota);
+      return {
+        metaQuota: next,
+        quotaCheckedAt: stampCheckedAt(state.metaQuota, next, state.quotaCheckedAt),
+      };
+    }),
   setPluginQuota: (updater) =>
-    set((state) => ({
-      pluginQuota: resolveUpdater(updater, state.pluginQuota),
-    })),
+    set((state) => {
+      const next = resolveUpdater(updater, state.pluginQuota);
+      return {
+        pluginQuota: next,
+        quotaCheckedAt: stampCheckedAt(state.pluginQuota, next, state.quotaCheckedAt),
+      };
+    }),
   setXaiQuota: (updater) =>
-    set((state) => ({
-      xaiQuota: resolveUpdater(updater, state.xaiQuota),
-    })),
+    set((state) => {
+      const next = resolveUpdater(updater, state.xaiQuota);
+      return {
+        xaiQuota: next,
+        quotaCheckedAt: stampCheckedAt(state.xaiQuota, next, state.quotaCheckedAt),
+      };
+    }),
   clearQuotaCache: (names) =>
     set((state) => {
       if (names) {
@@ -141,6 +205,8 @@ export const useQuotaStore = create<QuotaStoreState>((set) => ({
           metaQuota: omitNames(state.metaQuota),
           pluginQuota: omitNames(state.pluginQuota),
           xaiQuota: omitNames(state.xaiQuota),
+          observedQuota: omitNames(state.observedQuota),
+          quotaCheckedAt: omitNames(state.quotaCheckedAt),
         };
       }
       return {
@@ -154,7 +220,26 @@ export const useQuotaStore = create<QuotaStoreState>((set) => ({
         metaQuota: {},
         pluginQuota: {},
         xaiQuota: {},
+        observedQuota: {},
+        quotaCheckedAt: {},
       };
+    }),
+  syncObservedQuota: (files) =>
+    set(() => {
+      const observedQuota: Record<string, AuthFileQuotaObservation> = {};
+      files.forEach((file) => {
+        if (file.quotaObservation) observedQuota[getQuotaCacheKey(file)] = file.quotaObservation;
+      });
+      return { observedQuota };
+    }),
+  markQuotaChecked: (keys, atMs) =>
+    set((state) => {
+      if (keys.length === 0) return state;
+      const quotaCheckedAt = { ...state.quotaCheckedAt };
+      keys.forEach((key) => {
+        quotaCheckedAt[key] = atMs;
+      });
+      return { quotaCheckedAt };
     }),
 }));
 

@@ -91,6 +91,12 @@ export interface AuthFileQuotaObservation extends ObservedQuota {
   observedAt?: string;
   /** Local receipt time of the credentials list. */
   receivedAtMs: number;
+  /**
+   * Local-clock estimate of when the credential-level headers were captured:
+   * receipt time minus their server-measured age. Absent when either server
+   * timestamp is missing, in which case the age is unknown.
+   */
+  seenAtMs?: number;
   /** Per-model snapshots from `model_quotas`, keyed by model. */
   models?: Record<string, ObservedQuota & { observedAt?: string }>;
 }

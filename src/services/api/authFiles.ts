@@ -290,7 +290,8 @@ const normalizeAuthFileEntry = (
     readTextField(entry, 'provider') || entry.type,
     entry.quota,
     entry.model_quotas,
-    receivedAtMs
+    receivedAtMs,
+    observedAt
   );
 
   return {

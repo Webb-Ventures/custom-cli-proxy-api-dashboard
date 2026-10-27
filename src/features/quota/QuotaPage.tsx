@@ -49,6 +49,7 @@ import { QUOTA_ADAPTERS, getQuotaSetter, type QuotaCardState } from './providers
 import type { QuotaProviderType } from './providers/types';
 import { useDevinQuotaAutoLoad } from './providers/devin/useDevinQuotaAutoLoad';
 import { useQuotaActions } from './hooks/useQuotaActions';
+import { useQuotaAutoRefresh } from './hooks/useQuotaAutoRefresh';
 import { useQuotaBatchLoader } from './hooks/useQuotaBatchLoader';
 import { readQuotaUiState, writeQuotaUiState } from './uiState';
 import styles from './QuotaPage.module.scss';
@@ -104,6 +105,7 @@ export function QuotaPage() {
       const data = await authFilesApi.list();
       if (!isCurrent()) return;
       setFiles(data?.files || []);
+      useQuotaStore.getState().syncObservedQuota(data?.files || []);
       setFilesGeneration(sessionGeneration);
     } catch (err: unknown) {
       if (!isCurrent()) return;
@@ -297,6 +299,12 @@ export function QuotaPage() {
       Boolean(error) ||
       filesGeneration !== sessionGeneration,
     loadQuota
+  );
+
+  // Every credential, not just this page: the timeline and pressure sort read them all.
+  useQuotaAutoRefresh(
+    entries,
+    disableControls || loading || Boolean(error) || filesGeneration !== sessionGeneration
   );
 
   const canUseActions = !disableControls && !loading && filesGeneration === sessionGeneration;

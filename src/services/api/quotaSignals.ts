@@ -193,7 +193,9 @@ export const normalizeAuthFileQuotaObservation = (
   providerValue: unknown,
   quota: unknown,
   modelQuotas: unknown,
-  receivedAtMs: number
+  receivedAtMs: number,
+  /** Server time of the list response; lets age be measured on the server's clock. */
+  listObservedAt?: string
 ): AuthFileQuotaObservation | undefined => {
   const provider = resolveObservedQuotaProvider(providerValue);
   if (!provider) return undefined;
@@ -210,9 +212,18 @@ export const normalizeAuthFileQuotaObservation = (
   const credential = parseQuotaSignals(provider, quota, receivedAtMs);
   if (!credential && !hasModels) return undefined;
 
+  // Both instants are server clock, so their difference is immune to local skew.
+  const capturedMs = credential?.observedAt ? Date.parse(credential.observedAt) : NaN;
+  const listMs = listObservedAt ? Date.parse(listObservedAt) : NaN;
+  const seenAtMs =
+    Number.isFinite(capturedMs) && Number.isFinite(listMs)
+      ? receivedAtMs - Math.max(0, listMs - capturedMs)
+      : undefined;
+
   return {
     ...(credential ?? { provider, windows: [] }),
     receivedAtMs,
+    ...(seenAtMs !== undefined ? { seenAtMs } : {}),
     ...(hasModels ? { models } : {}),
   };
 };
