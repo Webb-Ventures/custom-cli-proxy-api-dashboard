@@ -13,7 +13,13 @@ import { META_CONFIG } from './providers/meta/data';
 import { PLUGIN_CONFIG } from './providers/plugin/data';
 import { XAI_CONFIG } from './providers/xai/data';
 import type { QuotaProviderType } from './providers/types';
-import { QUOTA_TAB_ORDER, type QuotaSortMode, type QuotaTabId } from './constants';
+import {
+  QUOTA_TAB_ORDER,
+  type QuotaHeadroomFilter,
+  type QuotaSortMode,
+  type QuotaTabId,
+} from './constants';
+import { compareHeadroomPressure, type HeadroomSummary } from './headroom';
 
 const QUOTA_FILTER_MAP: Record<QuotaProviderType, (file: AuthFileItem) => boolean> = {
   antigravity: ANTIGRAVITY_CONFIG.filterFn,
@@ -100,8 +106,23 @@ export function filterEntriesBySearch(entries: QuotaFileEntry[], search: string)
 export function sortQuotaEntries(
   entries: QuotaFileEntry[],
   mode: QuotaSortMode,
-  resolveNextRecoveryMs: (entry: QuotaFileEntry) => number | null
+  resolveNextRecoveryMs: (entry: QuotaFileEntry) => number | null,
+  resolveHeadroom?: (entry: QuotaFileEntry) => HeadroomSummary | undefined
 ): QuotaFileEntry[] {
+  if (mode === 'pressure' && resolveHeadroom) {
+    // Credentials with no reading yet sink, keeping their provider-grouped order.
+    return entries
+      .map((entry, index) => ({ entry, index, summary: resolveHeadroom(entry) }))
+      .sort((a, b) => {
+        if (!a.summary || !b.summary) {
+          if (a.summary) return -1;
+          if (b.summary) return 1;
+          return a.index - b.index;
+        }
+        return compareHeadroomPressure(a.summary, b.summary) || a.index - b.index;
+      })
+      .map((decorated) => decorated.entry);
+  }
   if (mode !== 'soonest') return [...entries];
 
   // Decorate once — resolving pokes at provider-shaped state per entry.
@@ -114,6 +135,25 @@ export function sortQuotaEntries(
       return a.atMs - b.atMs || a.index - b.index;
     })
     .map((decorated) => decorated.entry);
+}
+
+/** Keep only credentials in the chosen headroom state; unknown headroom matches only 'all'. */
+export function filterEntriesByHeadroom(
+  entries: QuotaFileEntry[],
+  filter: QuotaHeadroomFilter,
+  resolveHeadroom: (entry: QuotaFileEntry) => HeadroomSummary | undefined
+): QuotaFileEntry[] {
+  if (filter === 'all') return entries;
+  return entries.filter((entry) => {
+    const summary = resolveHeadroom(entry);
+    if (!summary) return false;
+    if (filter === 'ahead') return summary.tier === 'ahead' || summary.tier === 'runs-out';
+    const { availability } = summary;
+    if (availability.state !== 'blocked') return false;
+    return filter === 'cooling'
+      ? availability.reason === 'cooldown'
+      : availability.reason === 'exhausted';
+  });
 }
 
 export function buildTabCounts(entries: QuotaFileEntry[]): Record<string, number> {

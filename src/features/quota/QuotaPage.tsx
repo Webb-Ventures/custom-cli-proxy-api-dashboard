@@ -24,20 +24,26 @@ import type { AuthFileItem, ResolvedTheme } from '@/types';
 import { getQuotaCacheKey } from '@/utils/quota/identity';
 import { ProviderTabs } from '@/features/authFiles/components/ProviderTabs';
 import { QuotaHeader } from './components/QuotaHeader';
-import { QuotaCard } from './components/QuotaCard';
+import { QuotaCard, type QuotaCardHeadroom } from './components/QuotaCard';
 import { QuotaTimeline } from './components/QuotaTimeline';
 import {
   CARD_ENTRANCE_BUDGET_MS,
+  DEFAULT_QUOTA_SORT_MODE,
+  QUOTA_HEADROOM_FILTERS,
   QUOTA_PAGE_SIZE,
   QUOTA_SORT_MODES,
   QUOTA_TAB_ORDER,
+  type QuotaHeadroomFilter,
   type QuotaSortMode,
   type QuotaTabId,
 } from './constants';
+import { resolveCredentialHeadroom } from './freshness';
+import { summarizeHeadroom } from './headroom';
 import {
   buildTabCounts,
   canRefreshQuotaAfterList,
   classifyQuotaFiles,
+  filterEntriesByHeadroom,
   filterEntriesByTab,
   filterEntriesBySearch,
   paginate,
@@ -73,7 +79,10 @@ export function QuotaPage() {
   const [error, setError] = useState('');
   const [tab, setTab] = useState<QuotaTabId>(() => readQuotaUiState()?.tab ?? 'all');
   const [sortMode, setSortMode] = useState<QuotaSortMode>(
-    () => readQuotaUiState()?.sortMode ?? 'default'
+    () => readQuotaUiState()?.sortMode ?? DEFAULT_QUOTA_SORT_MODE
+  );
+  const [headroomFilter, setHeadroomFilter] = useState<QuotaHeadroomFilter>(
+    () => readQuotaUiState()?.headroomFilter ?? 'all'
   );
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -169,16 +178,84 @@ export function QuotaPage() {
 
   /* ---------- 归类 / 过滤 / 排序 / 分页 ---------- */
 
-  // 只在「最快恢复优先」下订阅分钟时钟。默认序下不门控的话，pageItems 每分钟
-  // 换一次身份，会反复空转下面那个「刷新全部」的 loading 下降沿 effect。
-  const tick = useNow(sortMode !== 'default');
-  const sortNow = sortMode === 'default' ? 0 : tick;
+  // Headroom (pace, run-out, freshness lines) reads the minute clock in every
+  // sort mode. The provider-grouped order alone ignores it, so pageItems keeps
+  // its identity there unless quota data changes.
+  const now = useNow();
+  const sortNow = sortMode === 'default' ? 0 : now;
 
   const entries = useMemo(() => classifyQuotaFiles(files), [files]);
   const tabCounts = useMemo(() => buildTabCounts(entries), [entries]);
+
+  /* ---------- headroom ----------
+   * Active fetches and passive traffic headers merged per credential, then
+   * summarized: tightest limit, pace, run-out and availability. */
+
+  const observedQuota = useQuotaStore((state) => state.observedQuota);
+  const quotaCheckedAt = useQuotaStore((state) => state.quotaCheckedAt);
+  const headroomByKey = useMemo(() => {
+    const byKey = new Map<string, QuotaCardHeadroom>();
+    entries.forEach((entry) => {
+      const key = getQuotaCacheKey(entry.file);
+      const resolved = resolveCredentialHeadroom(
+        entry,
+        quotaByType[entry.type][key],
+        observedQuota[key],
+        quotaCheckedAt[key]
+      );
+      const summary = summarizeHeadroom({
+        windows: resolved.windows,
+        cooldown: entry.file.cooldownSnapshot,
+        now,
+      });
+      // Nothing read and nothing blocking: leave the credential unknown.
+      if (summary.tier === 'unknown') return;
+      byKey.set(`${entry.type}:${key}`, {
+        summary,
+        seenAtMs: resolved.seenAtMs,
+        seenFrom: resolved.seenFrom,
+      });
+    });
+    return byKey;
+  }, [entries, quotaByType, observedQuota, quotaCheckedAt, now]);
+  const headroomFor = useCallback(
+    (entry: QuotaFileEntry) => headroomByKey.get(`${entry.type}:${getQuotaCacheKey(entry.file)}`),
+    [headroomByKey]
+  );
+  const headroomSummaryFor = useCallback(
+    (entry: QuotaFileEntry) => headroomFor(entry)?.summary,
+    [headroomFor]
+  );
+
+  // The timeline reads provider-shaped state. A Claude or Codex credential known
+  // only from traffic headers gets an equivalent success state built from them.
+  const timelineQuotaFor = useCallback(
+    (entry: QuotaFileEntry): QuotaCardState | undefined => {
+      const quota = getQuota(entry);
+      if (quota?.status === 'success') return quota;
+      const windows = headroomFor(entry)?.summary.windows;
+      if ((entry.type !== 'claude' && entry.type !== 'codex') || !windows?.length) return quota;
+      return {
+        status: 'success',
+        windows: windows.map((window) => ({
+          ...window,
+          label: window.labelKey
+            ? t(window.labelKey, window.labelParams ?? {})
+            : (window.label ?? window.id),
+        })),
+      } as QuotaCardState;
+    },
+    [getQuota, headroomFor, t]
+  );
+
   const filteredEntries = useMemo(
-    () => filterEntriesBySearch(filterEntriesByTab(entries, tab), search),
-    [entries, tab, search]
+    () =>
+      filterEntriesByHeadroom(
+        filterEntriesBySearch(filterEntriesByTab(entries, tab), search),
+        headroomFilter,
+        headroomSummaryFor
+      ),
+    [entries, tab, search, headroomFilter, headroomSummaryFor]
   );
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -191,8 +268,8 @@ export function QuotaPage() {
   );
   // 排序在分页之前：否则「最快恢复」只在当前页内成立。
   const sortedEntries = useMemo(
-    () => sortQuotaEntries(filteredEntries, sortMode, resolveNextRecovery),
-    [filteredEntries, sortMode, resolveNextRecovery]
+    () => sortQuotaEntries(filteredEntries, sortMode, resolveNextRecovery, headroomSummaryFor),
+    [filteredEntries, sortMode, resolveNextRecovery, headroomSummaryFor]
   );
 
   const { pageItems, currentPage, totalPages } = useMemo(
@@ -212,6 +289,21 @@ export function QuotaPage() {
     writeQuotaUiState({ sortMode: next as QuotaSortMode });
   }, []);
 
+  const handleHeadroomFilterChange = useCallback((next: string) => {
+    setHeadroomFilter(next as QuotaHeadroomFilter);
+    setPage(1);
+    writeQuotaUiState({ headroomFilter: next as QuotaHeadroomFilter });
+  }, []);
+
+  const filterOptions = useMemo(
+    () =>
+      QUOTA_HEADROOM_FILTERS.map((filter) => ({
+        value: filter,
+        label: t(`quota_management.filter_${filter}`),
+      })),
+    [t]
+  );
+
   const sortOptions = useMemo(
     () =>
       QUOTA_SORT_MODES.map((mode) => ({ value: mode, label: t(`quota_management.sort_${mode}`) })),
@@ -223,11 +315,12 @@ export function QuotaPage() {
     let attention = 0;
     entries.forEach((entry) => {
       const status = quotaByType[entry.type][getQuotaCacheKey(entry.file)]?.status;
-      if (status === 'success') loaded += 1;
+      // Traffic headers count as loaded: the card has a reading without a fetch.
+      if (status === 'success' || headroomFor(entry)?.summary.windows.length) loaded += 1;
       else if (status === 'error') attention += 1;
     });
     return { loadedCount: loaded, attentionCount: attention };
-  }, [entries, quotaByType]);
+  }, [entries, quotaByType, headroomFor]);
 
   // 剪枝：文件列表落定后，各 provider 缓存只保留仍存在的凭证
   useEffect(() => {
@@ -383,6 +476,15 @@ export function QuotaPage() {
           </div>
           <div className={styles.sort}>
             <Select
+              value={headroomFilter}
+              options={filterOptions}
+              onChange={handleHeadroomFilterChange}
+              ariaLabel={t('quota_management.filter_label')}
+              size="sm"
+            />
+          </div>
+          <div className={styles.sort}>
+            <Select
               value={sortMode}
               options={sortOptions}
               onChange={handleSortModeChange}
@@ -409,21 +511,33 @@ export function QuotaPage() {
             title={
               search.trim()
                 ? t('quota_management.search_empty_title')
-                : tab === 'all'
-                  ? t('quota_management.empty_title')
-                  : t(`${QUOTA_ADAPTERS[tab].i18nPrefix}.empty_title`)
+                : headroomFilter !== 'all'
+                  ? t('quota_management.filter_empty_title')
+                  : tab === 'all'
+                    ? t('quota_management.empty_title')
+                    : t(`${QUOTA_ADAPTERS[tab].i18nPrefix}.empty_title`)
             }
             description={
               search.trim()
                 ? t('quota_management.search_empty_desc')
-                : tab === 'all'
-                  ? t('quota_management.empty_desc')
-                  : t(`${QUOTA_ADAPTERS[tab].i18nPrefix}.empty_desc`)
+                : headroomFilter !== 'all'
+                  ? t('quota_management.filter_empty_desc')
+                  : tab === 'all'
+                    ? t('quota_management.empty_desc')
+                    : t(`${QUOTA_ADAPTERS[tab].i18nPrefix}.empty_desc`)
             }
             action={
               search.trim() ? (
                 <Button variant="secondary" size="sm" onClick={() => handleSearchChange('')}>
                   {t('quota_management.search_clear')}
+                </Button>
+              ) : headroomFilter !== 'all' ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleHeadroomFilterChange('all')}
+                >
+                  {t('quota_management.filter_all')}
                 </Button>
               ) : tab === 'all' ? undefined : (
                 <Button variant="secondary" size="sm" onClick={() => handleTabChange('all')}>
@@ -442,6 +556,8 @@ export function QuotaPage() {
                 resolvedTheme={resolvedTheme}
                 canRefresh={canUseActions && !entry.file.disabled}
                 resetting={resettingQuotaName === getQuotaCacheKey(entry.file)}
+                headroom={headroomFor(entry)}
+                now={now}
                 entranceDelayMs={cardEntranceDelay(index)}
                 onRefresh={() => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
                 onReset={() => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
@@ -478,10 +594,11 @@ export function QuotaPage() {
           </div>
         )}
 
-        {/* 时间线只比较当前页凭证，避免大量凭证一次性生成无界泳道。 */}
+        {/* Every credential that matches the tab, search and filter, in the grid's order;
+            lanes without a reset instant are already omitted. */}
         <QuotaTimeline
-          entries={pageItems}
-          quotaFor={getQuota}
+          entries={sortedEntries}
+          quotaFor={timelineQuotaFor}
           displayNameFor={displayNameFor}
           resolvedTheme={resolvedTheme}
         />

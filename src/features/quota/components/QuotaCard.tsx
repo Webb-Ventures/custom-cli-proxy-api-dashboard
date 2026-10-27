@@ -1,13 +1,19 @@
 /**
  * Provider quota card: identity, loading/error state, quota body, and actions.
  * Claude observations remain visible while refreshing or after a failed read.
+ *
+ * When headroom windows exist (from an active fetch, live traffic headers, or
+ * both), providers with flat windows show them tightest limit first and keep
+ * only their plan and credit content from the provider body. A card with
+ * traffic headers but no fetch yet shows them instead of the click-to-load hint.
  */
 
 import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconRefreshCw } from '@/components/ui/icons';
 import type { ClaudeQuotaState, ResolvedTheme } from '@/types';
-import { resolveQuotaErrorMessage } from '@/utils/quota';
+import { formatRelativeInstant, resolveQuotaErrorMessage } from '@/utils/quota';
+import { MINUTE_MS } from '@/utils/time/durations';
 import { getQuotaDisplayName } from '@/utils/quota/identity';
 import {
   getAuthFileIcon,
@@ -16,6 +22,10 @@ import {
   isThemeSurfaceIconProvider,
 } from '@/features/authFiles/constants';
 import { bindQuotaClasses } from '../types';
+import type { CredentialHeadroom } from '../freshness';
+import type { HeadroomSummary } from '../headroom';
+import type { QuotaProviderType } from '../providers/types';
+import { HeadroomWindows } from './HeadroomWindows';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
 import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
@@ -27,12 +37,33 @@ import styles from './QuotaCard.module.scss';
 /** Bind the quota-page styles to the shared rendering contract. */
 const quotaClasses = bindQuotaClasses(bodyStyles, 'QuotaBody.module.scss');
 
+/** Providers whose windows are a flat list the headroom block can replace. */
+const HEADROOM_WINDOW_PROVIDERS = new Set<QuotaProviderType>([
+  'claude',
+  'codex',
+  'devin',
+  'kimi',
+  'meta',
+]);
+
+export type QuotaCardHeadroom = Pick<CredentialHeadroom, 'seenAtMs' | 'seenFrom'> & {
+  summary: HeadroomSummary;
+};
+
+const TIER_TAGS: Partial<Record<HeadroomSummary['tier'], { key: string; tone: 'bad' | 'warn' }>> = {
+  'runs-out': { key: 'quota_management.tier_runs_out', tone: 'bad' },
+  ahead: { key: 'quota_management.tier_ahead', tone: 'warn' },
+};
+
 export type QuotaCardProps = {
   entry: QuotaFileEntry;
   quota?: QuotaCardState;
   resolvedTheme: ResolvedTheme;
   canRefresh: boolean;
   resetting: boolean;
+  /** Merged headroom; absent or windowless until any reading exists. */
+  headroom?: QuotaCardHeadroom;
+  now: number;
   /** Initial cascade delay; null disables entrance motion for later mounts. */
   entranceDelayMs?: number | null;
   onRefresh: () => void;
@@ -46,11 +77,13 @@ export function QuotaCard(props: QuotaCardProps) {
     resolvedTheme,
     canRefresh,
     resetting,
+    headroom,
+    now,
     entranceDelayMs,
     onRefresh,
     onReset,
   } = props;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const adapter = QUOTA_ADAPTERS[entry.type];
   const file = entry.file;
   const retainedClaudeUsage =
@@ -104,6 +137,40 @@ export function QuotaCard(props: QuotaCardProps) {
       )}
     </>
   ) : undefined;
+  const summary = headroom?.summary;
+  const showHeadroom =
+    HEADROOM_WINDOW_PROVIDERS.has(entry.type) && Boolean(summary?.windows.length);
+  const hasBodyData = status === 'success' || retainedClaudeUsage;
+
+  let freshness: string | null = null;
+  if (headroom && headroom.seenAtMs !== null && headroom.seenFrom) {
+    const justNow = now - headroom.seenAtMs < MINUTE_MS;
+    const time = formatRelativeInstant(headroom.seenAtMs, now, i18n.resolvedLanguage);
+    freshness =
+      headroom.seenFrom === 'traffic'
+        ? justNow
+          ? t('quota_management.seen_traffic_now')
+          : t('quota_management.seen_traffic', { time })
+        : justNow
+          ? t('quota_management.checked_now')
+          : t('quota_management.checked', { time });
+  }
+
+  let tierTag: { label: string; tone: 'bad' | 'warn' } | null = null;
+  if (summary?.availability.state === 'blocked') {
+    tierTag = {
+      label: t(
+        summary.availability.reason === 'cooldown'
+          ? 'quota_management.tier_cooldown'
+          : 'quota_management.tier_exhausted'
+      ),
+      tone: 'bad',
+    };
+  } else if (summary && TIER_TAGS[summary.tier]) {
+    const tag = TIER_TAGS[summary.tier]!;
+    tierTag = { label: t(tag.key), tone: tag.tone };
+  }
+
   const showReset =
     status === 'success' &&
     Boolean(adapter.resetQuota) &&
@@ -131,13 +198,39 @@ export function QuotaCard(props: QuotaCardProps) {
             <span className={styles.iconFallback}>{typeLabel.slice(0, 1).toUpperCase()}</span>
           )}
         </span>
-        <span className={styles.fileName} title={displayName}>
-          {displayName}
+        <span className={styles.identity}>
+          <span className={styles.fileName} title={displayName}>
+            {displayName}
+          </span>
+          {freshness && <span className={styles.freshness}>{freshness}</span>}
         </span>
       </header>
 
       <div className={styles.body}>
-        {status === 'idle' ? (
+        {showHeadroom && summary ? (
+          <>
+            <HeadroomWindows summary={summary} classes={quotaClasses} now={now} />
+            {hasBodyData && quota && (
+              <adapter.Body
+                quota={quota}
+                classes={quotaClasses}
+                planItems={claudePlanItems}
+                afterPlan={claudeAfterPlan}
+                showWindows={false}
+              />
+            )}
+            {loading && (
+              <div role="status" aria-busy="true" className={quotaClasses.quotaMessage}>
+                {t('quota_management.refreshing')}
+              </div>
+            )}
+            {status === 'error' && (
+              <div className={styles.errorStrip} role="alert">
+                {t(`${adapter.i18nPrefix}.load_failed`, { message: errorMessage })}
+              </div>
+            )}
+          </>
+        ) : status === 'idle' ? (
           <button
             type="button"
             className={styles.idleBody}
@@ -171,12 +264,12 @@ export function QuotaCard(props: QuotaCardProps) {
         ) : !retainedClaudeUsage ? (
           <div className={styles.idleHint}>{t(`${adapter.i18nPrefix}.idle`)}</div>
         ) : null}
-        {loading && retainedClaudeUsage && (
+        {!showHeadroom && loading && retainedClaudeUsage && (
           <div role="status" aria-busy="true" className={quotaClasses.quotaMessage}>
             {t(`${adapter.i18nPrefix}.loading`)}
           </div>
         )}
-        {retainedClaudeUsage && quota && (
+        {!showHeadroom && retainedClaudeUsage && quota && (
           <adapter.Body
             quota={quota}
             classes={quotaClasses}
@@ -186,8 +279,15 @@ export function QuotaCard(props: QuotaCardProps) {
         )}
       </div>
 
-      {status !== 'idle' && (
+      {(status !== 'idle' || showHeadroom) && (
         <footer className={styles.actionRow}>
+          {tierTag && (
+            <span
+              className={`${styles.tierTag} ${tierTag.tone === 'bad' ? styles.tierBad : styles.tierWarn}`}
+            >
+              {tierTag.label}
+            </span>
+          )}
           {entry.type === 'claude' && (
             <button
               type="button"

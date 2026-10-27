@@ -29,8 +29,10 @@ export type HeadroomSource = 'active' | 'passive' | 'mixed';
 
 export interface CredentialHeadroom {
   windows: HeadroomWindow[];
-  /** When the newest window was read; null when unknown. */
+  /** When the deciding reading was taken; null when unknown. */
   seenAtMs: number | null;
+  /** Where the deciding reading came from: live traffic headers or an active fetch. */
+  seenFrom: 'traffic' | 'fetch' | null;
   source: HeadroomSource | null;
 }
 
@@ -63,10 +65,12 @@ export function resolveCredentialHeadroom(
   const passiveAtMs = observationSeenAtMs(observation);
 
   if (passive.length === 0) {
-    return { windows: active, seenAtMs: activeAtMs, source: active.length ? 'active' : null };
+    return active.length > 0
+      ? { windows: active, seenAtMs: activeAtMs, seenFrom: 'fetch', source: 'active' }
+      : { windows: [], seenAtMs: null, seenFrom: null, source: null };
   }
   if (active.length === 0) {
-    return { windows: passive, seenAtMs: passiveAtMs, source: 'passive' };
+    return { windows: passive, seenAtMs: passiveAtMs, seenFrom: 'traffic', source: 'passive' };
   }
 
   const passiveWins = passiveAtMs !== null && (activeAtMs === null || passiveAtMs > activeAtMs);
@@ -83,8 +87,12 @@ export function resolveCredentialHeadroom(
     }
   });
 
-  const seenAtMs = passiveWins ? passiveAtMs : activeAtMs;
-  return { windows: Array.from(byId.values()), seenAtMs, source: replaced ? 'mixed' : 'active' };
+  return {
+    windows: Array.from(byId.values()),
+    seenAtMs: passiveWins ? passiveAtMs : activeAtMs,
+    seenFrom: passiveWins ? 'traffic' : 'fetch',
+    source: replaced ? 'mixed' : 'active',
+  };
 }
 
 export interface AutoRefreshInput {

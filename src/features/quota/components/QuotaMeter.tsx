@@ -34,9 +34,11 @@ export interface QuotaMeterProps {
   usage?: QuotaMeterUsage;
   classes: QuotaClassMap;
   index?: number;
+  /** Extra class on the track, e.g. a taller lead meter. */
+  className?: string;
 }
 
-export function QuotaMeter({ percent = null, usage, classes, index }: QuotaMeterProps) {
+export function QuotaMeter({ percent = null, usage, classes, index, className }: QuotaMeterProps) {
   const { t } = useTranslation();
   const toneClass: Record<QuotaMeterTone, string> = {
     high: classes.quotaBarFillHigh,
@@ -57,7 +59,7 @@ export function QuotaMeter({ percent = null, usage, classes, index }: QuotaMeter
     const fillClass =
       normalized === null ? classes.quotaBarFillMedium : toneClass[toneFromRemaining(normalized)];
     return (
-      <div className={classes.quotaBar}>
+      <div className={className ? `${classes.quotaBar} ${className}` : classes.quotaBar}>
         <div
           className={`${classes.quotaBarFill} ${fillClass}`}
           style={fillStyle(round2(normalized ?? 0))}
@@ -83,7 +85,7 @@ export function QuotaMeter({ percent = null, usage, classes, index }: QuotaMeter
 
   return (
     <div
-      className={classes.quotaBar}
+      className={className ? `${classes.quotaBar} ${className}` : classes.quotaBar}
       style={trackStyle}
       role="meter"
       aria-valuemin={0}

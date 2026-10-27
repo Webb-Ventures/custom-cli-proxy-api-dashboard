@@ -161,7 +161,10 @@ export function headroomWindowsFromQuota(
           const remaining = finiteOrNull(window.remainingPercent);
           return remaining === null
             ? null
-            : fromUsed({ ...window, usedPercent: 100 - remaining }, window.id);
+            : fromUsed(
+                { ...window, labelKey: `devin_quota.${window.id}`, usedPercent: 100 - remaining },
+                window.id
+              );
         })
       );
 

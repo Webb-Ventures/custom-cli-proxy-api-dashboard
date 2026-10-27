@@ -110,4 +110,9 @@ export interface QuotaBodyProps<TState> {
   planItems?: ReactNode;
   /** Host-owned content placed right after the plan row, before usage rows. */
   afterPlan?: ReactNode;
+  /**
+   * False when the host draws the usage windows itself (the headroom block); the
+   * body then keeps only its plan row, credits and other non-window content.
+   */
+  showWindows?: boolean;
 }

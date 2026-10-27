@@ -17,6 +17,7 @@ export function ClaudeQuotaBody({
   classes,
   planItems,
   afterPlan,
+  showWindows = true,
 }: QuotaBodyProps<ClaudeQuotaState>) {
   const { t, i18n } = useTranslation();
   const now = useNow();
@@ -155,7 +156,7 @@ export function ClaudeQuotaBody({
           </div>
         );
       })}
-      {windows.length === 0 && !extraUsage && !quota.dollarWindows?.length ? (
+      {!showWindows ? null : windows.length === 0 && !extraUsage && !quota.dollarWindows?.length ? (
         <div className={classes.quotaMessage}>{t('claude_quota.empty_windows')}</div>
       ) : (
         windows.map((window, index) => {

@@ -308,3 +308,40 @@
     animation: none;
   }
 }
+
+/* ---------- headroom: identity freshness line and state tag ---------- */
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.freshness {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  @include text-ellipsis;
+}
+
+.tierTag {
+  margin-right: auto;
+  align-self: center;
+  border-radius: $radius-full;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  border: 1px solid currentColor;
+}
+
+.tierBad {
+  color: var(--viz-failure);
+  background: color-mix(in srgb, var(--viz-failure) 8%, transparent);
+}
+
+.tierWarn {
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--quota-medium-color) 70%, transparent);
+  background: color-mix(in srgb, var(--quota-medium-color) 16%, transparent);
+}

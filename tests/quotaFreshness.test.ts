@@ -89,6 +89,7 @@ describe('resolveCredentialHeadroom', () => {
     );
     expect(result.source).toBe('mixed');
     expect(result.seenAtMs).toBe(now - 2 * MINUTE);
+    expect(result.seenFrom).toBe('traffic');
     expect(result.windows.map((window) => [window.id, window.usedPercent])).toEqual([
       ['five-hour', 64],
       ['seven-day-opus', 12],
@@ -105,6 +106,7 @@ describe('resolveCredentialHeadroom', () => {
     expect(older.windows[0].usedPercent).toBe(30);
     expect(older.source).toBe('active');
     expect(older.seenAtMs).toBe(now - HOUR);
+    expect(older.seenFrom).toBe('fetch');
 
     const undated = resolveCredentialHeadroom(
       claudeEntry,
@@ -128,6 +130,7 @@ describe('resolveCredentialHeadroom', () => {
     expect(resolveCredentialHeadroom(claudeEntry, undefined, undefined, undefined)).toEqual({
       windows: [],
       seenAtMs: null,
+      seenFrom: null,
       source: null,
     });
   });

@@ -1,6 +1,8 @@
 import {
+  QUOTA_HEADROOM_FILTERS,
   QUOTA_SORT_MODES,
   QUOTA_TAB_ORDER,
+  type QuotaHeadroomFilter,
   type QuotaSortMode,
   type QuotaTabId,
 } from './constants';
@@ -9,18 +11,23 @@ import {
 export type QuotaUiState = {
   tab?: QuotaTabId;
   sortMode?: QuotaSortMode;
+  headroomFilter?: QuotaHeadroomFilter;
 };
 
 const QUOTA_UI_STATE_KEY = 'quotaPage.uiState';
 
 const QUOTA_TAB_ID_SET = new Set<string>(['all', ...QUOTA_TAB_ORDER]);
 const QUOTA_SORT_MODE_SET = new Set<string>(QUOTA_SORT_MODES);
+const QUOTA_HEADROOM_FILTER_SET = new Set<string>(QUOTA_HEADROOM_FILTERS);
 
 export const isQuotaTabId = (value: unknown): value is QuotaTabId =>
   typeof value === 'string' && QUOTA_TAB_ID_SET.has(value);
 
 export const isQuotaSortMode = (value: unknown): value is QuotaSortMode =>
   typeof value === 'string' && QUOTA_SORT_MODE_SET.has(value);
+
+export const isQuotaHeadroomFilter = (value: unknown): value is QuotaHeadroomFilter =>
+  typeof value === 'string' && QUOTA_HEADROOM_FILTER_SET.has(value);
 
 export const readQuotaUiState = (): QuotaUiState | null => {
   if (typeof window === 'undefined') return null;
@@ -32,6 +39,9 @@ export const readQuotaUiState = (): QuotaUiState | null => {
     return {
       tab: isQuotaTabId(parsed.tab) ? parsed.tab : undefined,
       sortMode: isQuotaSortMode(parsed.sortMode) ? parsed.sortMode : undefined,
+      headroomFilter: isQuotaHeadroomFilter(parsed.headroomFilter)
+        ? parsed.headroomFilter
+        : undefined,
     };
   } catch {
     return null;

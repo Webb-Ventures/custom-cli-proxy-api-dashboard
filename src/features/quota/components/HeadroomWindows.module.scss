@@ -1,0 +1,35 @@
+/* Tightest limit first: one tall lead meter, thin meters for the rest. */
+
+.headroom {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.leadMeter {
+  height: 10px;
+}
+
+.leadCaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  row-gap: 2px;
+
+  > span {
+    white-space: nowrap;
+  }
+}
+
+/* The reset label pair stays together on the right. */
+.leadReset {
+  display: inline-flex;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.alert {
+  color: var(--viz-failure);
+  font-weight: 600;
+}
