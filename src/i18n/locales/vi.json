@@ -2550,6 +2550,21 @@
     "card_today_value": "{{tokens}} token, {{value}}",
     "card_today_open": "Mở mức sử dụng hôm nay của thông tin xác thực này",
     "quota_since_reset": "{{window}}, từ khi đặt lại: {{tokens}} token, {{value}}.",
-    "quota_left": "Còn khoảng {{tokens}} (ước tính)."
+    "quota_left": "Còn khoảng {{tokens}} (ước tính).",
+    "plan_set": "Đặt gói",
+    "plan_change": "Đổi",
+    "plan_edit_label": "Đặt gói cho {{name}}",
+    "plan_editor_title": "Gói của {{name}}",
+    "plan_editor_hint": "Chọn số tiền tài khoản {{provider}} này trả mỗi tháng. Giá trị này dùng để so sánh giá trị tương đương API với chi phí thực tế và thay thế gói được phát hiện.",
+    "plan_editor_choose": "Chọn gói",
+    "plan_editor_plan": "Gói",
+    "plan_editor_custom": "Giá tùy chỉnh",
+    "plan_editor_price": "Giá hàng tháng",
+    "plan_editor_price_invalid": "Nhập giá từ 0 trở lên.",
+    "plan_editor_currency": "Tiền tệ",
+    "plan_editor_currency_invalid": "Dùng mã tiền tệ gồm ba chữ cái, ví dụ USD.",
+    "plan_editor_save": "Lưu gói",
+    "plan_editor_clear": "Dùng gói được phát hiện",
+    "plan_editor_failed": "Không lưu được gói: {{error}}"
   }
 }

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { providerLabel } from '@/features/dashboard/utils';
 import { poolCapacity, type AccountCapacity } from '../capacity';
-import type { ProviderPool } from '../usageModel';
+import type { ProviderPool, UsageCredential } from '../usageModel';
 import { formatMoney, formatMultiple, formatTokens } from '../format';
 import { AccountsTable } from './AccountsTable';
 import styles from './UsagePanels.module.scss';
@@ -9,11 +9,17 @@ import styles from './UsagePanels.module.scss';
 export interface ProvidersViewProps {
   pools: readonly ProviderPool[];
   capacity: ReadonlyMap<string, AccountCapacity>;
+  onEditPlan?: (credential: UsageCredential) => void;
   onSelectCredential: (authIndex: string) => void;
 }
 
 /** One panel per provider: its accounts pooled, with plan cost against API value. */
-export function ProvidersView({ pools, capacity, onSelectCredential }: ProvidersViewProps) {
+export function ProvidersView({
+  pools,
+  capacity,
+  onEditPlan,
+  onSelectCredential,
+}: ProvidersViewProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
 
@@ -84,6 +90,7 @@ export function ProvidersView({ pools, capacity, onSelectCredential }: Providers
             />
             <AccountsTable
               capacity={capacity}
+              onEditPlan={onEditPlan}
               accounts={pool.accounts}
               showProvider={false}
               label={t('usage.provider_accounts_label', { provider: name })}

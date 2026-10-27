@@ -2544,6 +2544,21 @@
     "card_today_value": "{{tokens}} 토큰, {{value}}",
     "card_today_open": "이 자격 증명의 오늘 사용량 열기",
     "quota_since_reset": "{{window}} 재설정 이후: {{tokens}} 토큰, {{value}}.",
-    "quota_left": "약 {{tokens}} 남음(추정)."
+    "quota_left": "약 {{tokens}} 남음(추정).",
+    "plan_set": "요금제 설정",
+    "plan_change": "변경",
+    "plan_edit_label": "{{name}}의 요금제 설정",
+    "plan_editor_title": "{{name}} 요금제",
+    "plan_editor_hint": "이 {{provider}} 계정이 매월 지불하는 요금제를 선택하세요. API 환산 가치와 실제 비용을 비교하는 데 쓰이며, 자동 감지된 요금제를 대체합니다.",
+    "plan_editor_choose": "요금제 선택",
+    "plan_editor_plan": "요금제",
+    "plan_editor_custom": "사용자 지정 가격",
+    "plan_editor_price": "월 가격",
+    "plan_editor_price_invalid": "0 이상의 가격을 입력하세요.",
+    "plan_editor_currency": "통화",
+    "plan_editor_currency_invalid": "USD와 같은 세 글자 통화 코드를 사용하세요.",
+    "plan_editor_save": "요금제 저장",
+    "plan_editor_clear": "자동 감지된 요금제 사용",
+    "plan_editor_failed": "요금제를 저장하지 못했습니다: {{error}}"
   }
 }

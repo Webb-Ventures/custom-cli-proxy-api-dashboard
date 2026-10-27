@@ -4,6 +4,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import i18n from '@/i18n';
+import { AccountsTable } from '@/features/usage/components/AccountsTable';
 import { HistoryChart } from '@/features/usage/components/HistoryChart';
 import { UsageTodayStrip } from '@/features/usage/components/UsageTodayStrip';
 import { UsageUnavailable } from '@/features/usage/components/UsageUnavailable';
@@ -14,7 +15,8 @@ import {
   formatSpan,
   niceAxisMax,
 } from '@/features/usage/format';
-import type { UsageBar } from '@/features/usage/usageModel';
+import { EMPTY_VALUE } from '@/features/usage/cost';
+import type { AccountRow, UsageBar } from '@/features/usage/usageModel';
 
 const previousLanguage = i18n.language;
 
@@ -136,6 +138,41 @@ describe('UsageTodayStrip', () => {
     expect(html).toContain('$186');
     expect(html).toContain('None active');
     expect(html).toContain('href="/usage?range=today"');
+  });
+});
+
+describe('AccountsTable plan editing', () => {
+  const zero = { input: 0, cacheRead: 0, cacheWrite: 0, output: 0, reasoning: 0, unclassified: 0 };
+  const account: AccountRow = {
+    row: {
+      key: 'auth:k1',
+      kind: 'credential',
+      id: 'k1',
+      credential: { authIndex: 'k1', name: 'kimi-main.json', type: 'kimi', plan: null },
+      requests: 3,
+      failed: 0,
+      tokens: { ...zero, input: 1000, total: 1000 },
+      value: EMPTY_VALUE,
+      change: null,
+    },
+    planCost: null,
+    multiple: null,
+  };
+  const props = {
+    accounts: [account],
+    showProvider: true,
+    label: 'Accounts',
+    onSelectCredential: () => undefined,
+  };
+
+  test('offers to set a plan only when plans can be saved', () => {
+    const editable = render(
+      createElement(AccountsTable, { ...props, onEditPlan: () => undefined })
+    );
+    expect(editable).toContain('aria-label="Set the plan for kimi-main.json"');
+    expect(editable).toContain('>Set plan</button>');
+
+    expect(render(createElement(AccountsTable, props))).not.toContain('Set plan');
   });
 });
 

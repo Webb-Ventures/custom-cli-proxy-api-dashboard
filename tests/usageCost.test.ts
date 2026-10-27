@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import type { UsageModelRow, UsagePrices, UsageTokens } from '@/services/api/usageLedger';
+import type {
+  UsageLedgerSettings,
+  UsageModelRow,
+  UsagePrices,
+  UsageTokens,
+} from '@/services/api/usageLedger';
 import {
   claudePlanId,
   codexPlanId,
@@ -10,6 +15,7 @@ import {
   tokensCostUsd,
   valueMultiple,
   valueOfModelRows,
+  withPlanOverride,
 } from '@/features/usage/cost';
 
 const tokens = (partial: Partial<UsageTokens>): UsageTokens => {
@@ -219,5 +225,32 @@ describe('plans', () => {
     expect(valueMultiple(46, 23, 'USD')).toBe(2);
     expect(valueMultiple(46, 23, 'EUR')).toBeNull();
     expect(valueMultiple(46, 0, 'USD')).toBeNull();
+  });
+});
+
+describe('withPlanOverride', () => {
+  const settings: UsageLedgerSettings = {
+    planOverrides: { a1: { provider: 'claude', plan: 'pro', monthlyPrice: 20 } },
+    modelPriceOverrides: {},
+    defaultCurrency: 'USD',
+    updatedAt: null,
+  };
+
+  test('sets or replaces one credential and leaves the input untouched', () => {
+    const kimi = { provider: 'kimi', plan: 'custom', monthlyPrice: 19, currency: 'USD' };
+    const next = withPlanOverride(settings, 'k1', kimi);
+    expect(next.planOverrides).toEqual({ a1: settings.planOverrides.a1, k1: kimi });
+    expect(settings.planOverrides.k1).toBeUndefined();
+
+    const replaced = withPlanOverride(next, 'a1', { ...settings.planOverrides.a1, plan: 'max_5x' });
+    expect(replaced.planOverrides.a1.plan).toBe('max_5x');
+    expect(next.planOverrides.a1.plan).toBe('pro');
+  });
+
+  test('null removes the override so detection applies again', () => {
+    const next = withPlanOverride(settings, 'a1', null);
+    expect(next.planOverrides).toEqual({});
+    expect(settings.planOverrides.a1).toBeDefined();
+    expect(next.defaultCurrency).toBe('USD');
   });
 });

@@ -2566,6 +2566,21 @@
     "card_today_value": "{{tokens}} токенов, {{value}}",
     "card_today_open": "Открыть использование этих учётных данных за сегодня",
     "quota_since_reset": "{{window}}, с обновления: {{tokens}} токенов, {{value}}.",
-    "quota_left": "Осталось около {{tokens}} (оценка)."
+    "quota_left": "Осталось около {{tokens}} (оценка).",
+    "plan_set": "Указать тариф",
+    "plan_change": "Изменить",
+    "plan_edit_label": "Указать тариф для {{name}}",
+    "plan_editor_title": "Тариф {{name}}",
+    "plan_editor_hint": "Выберите, сколько этот аккаунт {{provider}} платит в месяц. Это нужно, чтобы сравнить стоимость по ценам API с реальными расходами; выбор заменяет определённый автоматически тариф.",
+    "plan_editor_choose": "Выберите тариф",
+    "plan_editor_plan": "Тариф",
+    "plan_editor_custom": "Своя цена",
+    "plan_editor_price": "Цена в месяц",
+    "plan_editor_price_invalid": "Введите цену от 0.",
+    "plan_editor_currency": "Валюта",
+    "plan_editor_currency_invalid": "Используйте трёхбуквенный код валюты, например USD.",
+    "plan_editor_save": "Сохранить тариф",
+    "plan_editor_clear": "Использовать определённый тариф",
+    "plan_editor_failed": "Не удалось сохранить тариф: {{error}}"
   }
 }

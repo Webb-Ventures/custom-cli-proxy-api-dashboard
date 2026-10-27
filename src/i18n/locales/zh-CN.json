@@ -2529,6 +2529,21 @@
     "card_today_value": "{{tokens}} Token，{{value}}",
     "card_today_open": "打开此凭证的今日用量",
     "quota_since_reset": "{{window}}重置以来：{{tokens}} Token，{{value}}。",
-    "quota_left": "估算约剩 {{tokens}}。"
+    "quota_left": "估算约剩 {{tokens}}。",
+    "plan_set": "设置套餐",
+    "plan_change": "更改",
+    "plan_edit_label": "为 {{name}} 设置套餐",
+    "plan_editor_title": "{{name}} 的套餐",
+    "plan_editor_hint": "选择此 {{provider}} 账号每月支付的套餐。它用于将 API 等价价值与实际费用进行比较，并替代自动识别的套餐。",
+    "plan_editor_choose": "选择套餐",
+    "plan_editor_plan": "套餐",
+    "plan_editor_custom": "自定义价格",
+    "plan_editor_price": "每月价格",
+    "plan_editor_price_invalid": "请输入 0 或更高的价格。",
+    "plan_editor_currency": "货币",
+    "plan_editor_currency_invalid": "请使用三个字母的货币代码，例如 USD。",
+    "plan_editor_save": "保存套餐",
+    "plan_editor_clear": "使用自动识别的套餐",
+    "plan_editor_failed": "无法保存套餐：{{error}}"
   }
 }

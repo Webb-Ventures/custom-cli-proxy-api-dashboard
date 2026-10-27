@@ -2544,6 +2544,21 @@
     "card_today_value": "{{tokens}} tokens, {{value}}",
     "card_today_open": "Open today's usage for this credential",
     "quota_since_reset": "{{window}}, since reset: {{tokens}} tokens, {{value}}.",
-    "quota_left": "About {{tokens}} left (estimate)."
+    "quota_left": "About {{tokens}} left (estimate).",
+    "plan_set": "Set plan",
+    "plan_change": "Change",
+    "plan_edit_label": "Set the plan for {{name}}",
+    "plan_editor_title": "Plan for {{name}}",
+    "plan_editor_hint": "Pick what this {{provider}} account pays each month. It's used to compare its API-equivalent value with what it costs, and replaces the detected plan.",
+    "plan_editor_choose": "Choose a plan",
+    "plan_editor_plan": "Plan",
+    "plan_editor_custom": "Custom price",
+    "plan_editor_price": "Monthly price",
+    "plan_editor_price_invalid": "Enter a price of 0 or more.",
+    "plan_editor_currency": "Currency",
+    "plan_editor_currency_invalid": "Use a three-letter currency code, such as USD.",
+    "plan_editor_save": "Save plan",
+    "plan_editor_clear": "Use detected plan",
+    "plan_editor_failed": "Couldn't save the plan: {{error}}"
   }
 }

@@ -2557,6 +2557,21 @@
     "card_today_value": "{{tokens}} Token，{{value}}",
     "card_today_open": "開啟此憑證的今日用量",
     "quota_since_reset": "{{window}}重置以來：{{tokens}} Token，{{value}}。",
-    "quota_left": "估算約剩 {{tokens}}。"
+    "quota_left": "估算約剩 {{tokens}}。",
+    "plan_set": "設定方案",
+    "plan_change": "變更",
+    "plan_edit_label": "為 {{name}} 設定方案",
+    "plan_editor_title": "{{name}} 的方案",
+    "plan_editor_hint": "選擇此 {{provider}} 帳號每月支付的方案。它用於將 API 等價價值與實際費用進行比較，並取代自動偵測的方案。",
+    "plan_editor_choose": "選擇方案",
+    "plan_editor_plan": "方案",
+    "plan_editor_custom": "自訂價格",
+    "plan_editor_price": "每月價格",
+    "plan_editor_price_invalid": "請輸入 0 或更高的價格。",
+    "plan_editor_currency": "貨幣",
+    "plan_editor_currency_invalid": "請使用三個字母的貨幣代碼，例如 USD。",
+    "plan_editor_save": "儲存方案",
+    "plan_editor_clear": "使用自動偵測的方案",
+    "plan_editor_failed": "無法儲存方案：{{error}}"
   }
 }

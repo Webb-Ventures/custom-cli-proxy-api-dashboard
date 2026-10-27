@@ -327,3 +327,15 @@ export function detectCredentialPlan(
   }
   return null;
 }
+
+/** Settings with one credential's plan override set, or removed when `override` is null. */
+export function withPlanOverride(
+  settings: UsageLedgerSettings,
+  authIndex: string,
+  override: UsageLedgerSettings['planOverrides'][string] | null
+): UsageLedgerSettings {
+  const planOverrides = { ...settings.planOverrides };
+  if (override) planOverrides[authIndex] = override;
+  else delete planOverrides[authIndex];
+  return { ...settings, planOverrides };
+}

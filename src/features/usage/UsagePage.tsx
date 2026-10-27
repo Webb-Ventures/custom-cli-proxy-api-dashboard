@@ -15,6 +15,7 @@ import { BlocksTable } from './components/BlocksTable';
 import { CurrentBlockCard } from './components/CurrentBlockCard';
 import { GroupTable } from './components/GroupTable';
 import { HistoryChart } from './components/HistoryChart';
+import { PlanEditor } from './components/PlanEditor';
 import { ProvidersView } from './components/ProvidersView';
 import { Segmented } from './components/Segmented';
 import { TokenClassTable } from './components/TokenClassTable';
@@ -38,7 +39,13 @@ import {
   type UsageRangeKind,
   type UsageUrlState,
 } from './range';
-import { buildAccounts, buildBlocks, buildProviderPools, buildUsageOverview } from './usageModel';
+import {
+  buildAccounts,
+  buildBlocks,
+  buildProviderPools,
+  buildUsageOverview,
+  type UsageCredential,
+} from './usageModel';
 import styles from './UsagePage.module.scss';
 
 /** While the range includes today, reload this often so the open bucket and block stay current. */
@@ -133,6 +140,11 @@ export function UsagePage() {
     [data, overview, overviewView, credentials, now]
   );
   const pools = useMemo(() => (accounts ? buildProviderPools(accounts.accounts) : []), [accounts]);
+
+  const [editingPlan, setEditingPlan] = useState<UsageCredential | null>(null);
+  // Plans save into the plugin's settings, which exist only while its database is open.
+  const canEditPlans = Boolean(plugin.prices?.overrides);
+  const editPlan = canEditPlans ? setEditingPlan : undefined;
 
   const [exporting, setExporting] = useState(false);
   const exportCsv = async () => {
@@ -389,6 +401,7 @@ export function UsagePage() {
                 <ProvidersView
                   pools={pools}
                   capacity={capacity.byAuthIndex}
+                  onEditPlan={editPlan}
                   onSelectCredential={selectCredential}
                 />
               ) : (
@@ -398,6 +411,7 @@ export function UsagePage() {
                       accounts={accounts.accounts}
                       showProvider
                       capacity={capacity.byAuthIndex}
+                      onEditPlan={editPlan}
                       label={t('usage.accounts_label')}
                       onSelectCredential={selectCredential}
                     />
@@ -422,6 +436,16 @@ export function UsagePage() {
             </div>
           )}
         </>
+      )}
+
+      {editingPlan && plugin.prices?.overrides && (
+        <PlanEditor
+          credential={editingPlan}
+          prices={plugin.prices}
+          settings={plugin.prices.overrides}
+          onSave={plugin.saveSettings}
+          onClose={() => setEditingPlan(null)}
+        />
       )}
     </div>
   );

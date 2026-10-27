@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { providerLabel } from '@/features/dashboard/utils';
 import { CAPACITY_MIN_USED_PERCENT, type AccountCapacity } from '../capacity';
-import type { AccountRow } from '../usageModel';
+import type { AccountRow, UsageCredential } from '../usageModel';
 import { formatMoney, formatMultiple, formatTokens } from '../format';
 import { rowLabel } from '../labels';
 import styles from './UsagePanels.module.scss';
@@ -13,6 +13,8 @@ export interface AccountsTableProps {
   label: string;
   /** Estimated capacity by `auth_index`; adds limit and tokens-left columns. */
   capacity?: ReadonlyMap<string, AccountCapacity>;
+  /** Opens the plan editor; absent while plan settings can't be saved. */
+  onEditPlan?: (credential: UsageCredential) => void;
   onSelectCredential: (authIndex: string) => void;
 }
 
@@ -21,6 +23,7 @@ export function AccountsTable({
   showProvider,
   label,
   capacity,
+  onEditPlan,
   onSelectCredential,
 }: AccountsTableProps) {
   const { t, i18n } = useTranslation();
@@ -99,6 +102,16 @@ export function AccountsTable({
                     </>
                   ) : (
                     <span className={styles.muted}>{t('usage.plan_unknown')}</span>
+                  )}
+                  {row.credential && onEditPlan && (
+                    <button
+                      type="button"
+                      className={styles.planEdit}
+                      onClick={() => onEditPlan(row.credential!)}
+                      aria-label={t('usage.plan_edit_label', { name })}
+                    >
+                      {plan ? t('usage.plan_change') : t('usage.plan_set')}
+                    </button>
                   )}
                 </td>
                 {capacity && <CapacityCells estimate={capacity.get(row.id)} />}
