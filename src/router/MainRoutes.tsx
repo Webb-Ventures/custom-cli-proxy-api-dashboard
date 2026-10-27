@@ -6,6 +6,7 @@ import { AuthFilesOAuthExcludedEditPage } from '@/pages/AuthFilesOAuthExcludedEd
 import { AuthFilesOAuthModelAliasEditPage } from '@/pages/AuthFilesOAuthModelAliasEditPage';
 import { OAuthPage } from '@/features/oauth/OAuthPage';
 import { QuotaPage } from '@/features/quota/QuotaPage';
+import { UsagePage } from '@/features/usage/UsagePage';
 import { PluginResourcePage } from '@/features/plugins/PluginResourcePage';
 import { PluginsPage } from '@/features/plugins/PluginsPage';
 import { PluginStorePage } from '@/features/plugins/PluginStorePage';
@@ -30,12 +31,14 @@ const createMainRoutes = (supportsPlugin: boolean) => [
   { path: '/quota', element: <QuotaPage /> },
   ...(supportsPlugin
     ? [
+        { path: '/usage', element: <UsagePage /> },
         { path: '/plugin-pages/:pluginId/:menuIndex', element: <PluginResourcePage /> },
         { path: '/plugins', element: <PluginsPage /> },
         { path: '/plugin-store', element: <PluginStorePage /> },
         { path: '/plugins/*', element: <Navigate to="/plugins" replace /> },
       ]
     : [
+        { path: '/usage', element: <Navigate to="/" replace /> },
         { path: '/plugin-pages/*', element: <Navigate to="/" replace /> },
         { path: '/plugins/*', element: <Navigate to="/" replace /> },
         { path: '/plugin-store', element: <Navigate to="/" replace /> },

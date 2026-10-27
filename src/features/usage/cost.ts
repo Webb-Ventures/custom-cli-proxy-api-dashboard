@@ -74,8 +74,24 @@ export function resolveModelPrice(
 
 const isPriced = (price: TokenPrices) => price.input !== undefined || price.output !== undefined;
 
-/** USD for one model row's tokens. Unclassified tokens are not priced. */
-export function tokensCostUsd(tokens: UsageTokens, price: ResolvedPrice, serviceTier = ''): number {
+export const TOKEN_CLASSES = ['input', 'cacheRead', 'cacheWrite', 'output', 'reasoning'] as const;
+export type TokenClass = (typeof TOKEN_CLASSES)[number];
+export type TokenClassUsd = Record<TokenClass, number>;
+
+const zeroClasses = (): TokenClassUsd => ({
+  input: 0,
+  cacheRead: 0,
+  cacheWrite: 0,
+  output: 0,
+  reasoning: 0,
+});
+
+/** USD per token class for one model row. Unclassified tokens are not priced. */
+export function tokenClassCostsUsd(
+  tokens: UsageTokens,
+  price: ResolvedPrice,
+  serviceTier = ''
+): TokenClassUsd {
   const tierPrices =
     'serviceTiers' in price
       ? serviceTier === 'priority'
@@ -91,17 +107,24 @@ export function tokensCostUsd(tokens: UsageTokens, price: ResolvedPrice, service
   const cacheRead = rate('cacheRead') ?? input;
   const cacheWrite = rate('cacheWrite') ?? input;
   const reasoning = ('reasoning' in price ? price.reasoning : undefined) ?? output;
-  return (
-    tokens.input * input +
-    tokens.cacheRead * cacheRead +
-    tokens.cacheWrite * cacheWrite +
-    tokens.output * output +
-    tokens.reasoning * reasoning
-  );
+  return {
+    input: tokens.input * input,
+    cacheRead: tokens.cacheRead * cacheRead,
+    cacheWrite: tokens.cacheWrite * cacheWrite,
+    output: tokens.output * output,
+    reasoning: tokens.reasoning * reasoning,
+  };
+}
+
+/** USD for one model row's tokens. */
+export function tokensCostUsd(tokens: UsageTokens, price: ResolvedPrice, serviceTier = ''): number {
+  const costs = tokenClassCostsUsd(tokens, price, serviceTier);
+  return TOKEN_CLASSES.reduce((sum, key) => sum + costs[key], 0);
 }
 
 export interface UsageValue {
   usd: number;
+  byClass: TokenClassUsd;
   /** Tokens on models with no price; excluded from `usd`. */
   unpricedTokens: number;
   unpricedModels: string[];
@@ -111,6 +134,7 @@ export interface UsageValue {
 
 export const EMPTY_VALUE: UsageValue = {
   usd: 0,
+  byClass: zeroClasses(),
   unpricedTokens: 0,
   unpricedModels: [],
   unclassifiedTokens: 0,
@@ -124,6 +148,7 @@ export function valueOfModelRows(
   overrides?: UsageLedgerSettings['modelPriceOverrides']
 ): UsageValue {
   let usd = 0;
+  const byClass = zeroClasses();
   let unpricedTokens = 0;
   let unclassifiedTokens = 0;
   const unpriced = new Set<string>();
@@ -140,14 +165,27 @@ export function valueOfModelRows(
       if (row.model) unpriced.add(row.model);
       return;
     }
-    usd += tokensCostUsd(row.tokens, price, row.serviceTier);
+    const costs = tokenClassCostsUsd(row.tokens, price, row.serviceTier);
+    TOKEN_CLASSES.forEach((key) => {
+      byClass[key] += costs[key];
+      usd += costs[key];
+    });
   });
-  return { usd, unpricedTokens, unpricedModels: Array.from(unpriced).sort(), unclassifiedTokens };
+  return {
+    usd,
+    byClass,
+    unpricedTokens,
+    unpricedModels: Array.from(unpriced).sort(),
+    unclassifiedTokens,
+  };
 }
 
 export function addValues(a: UsageValue, b: UsageValue): UsageValue {
   return {
     usd: a.usd + b.usd,
+    byClass: Object.fromEntries(
+      TOKEN_CLASSES.map((key) => [key, a.byClass[key] + b.byClass[key]])
+    ) as TokenClassUsd,
     unpricedTokens: a.unpricedTokens + b.unpricedTokens,
     unpricedModels: Array.from(new Set([...a.unpricedModels, ...b.unpricedModels])).sort(),
     unclassifiedTokens: a.unclassifiedTokens + b.unclassifiedTokens,

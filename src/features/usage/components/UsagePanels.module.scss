@@ -1,0 +1,416 @@
+@use '../../../styles/mixins' as *;
+
+/* Usage panels: tables, the live block, provider pools and the unavailable state. */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-lg;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  min-width: 0;
+
+  @include mobile {
+    padding: $spacing-md;
+  }
+}
+
+/* The live block is the page's one raised surface. */
+.panelRaised {
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow);
+}
+
+.panelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px $spacing-md;
+  flex-wrap: wrap;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.panelAside {
+  font-family: $font-mono;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+.muted {
+  color: var(--text-tertiary);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Live block ---------- */
+
+.projection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.projectionTrack {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+}
+
+.projectionSoFar {
+  border-radius: $radius-sm 0 0 $radius-sm;
+  background: var(--text-primary);
+  min-width: 2px;
+}
+
+.projectionRest {
+  border-radius: 0 $radius-sm $radius-sm 0;
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--text-primary) 40%, transparent) 0 2px,
+    transparent 2px 5px
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 45%, transparent);
+}
+
+.projectionLegend {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-md;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-md;
+
+  dt {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-family: $font-mono;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  small {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+  }
+
+  @include mobile {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* ---------- Tables ---------- */
+
+.scroll {
+  overflow-x: auto;
+  margin: 0 (-$spacing-sm);
+  padding: 0 $spacing-sm;
+
+  /* Wide tables scroll sideways on phones instead of crushing the name column. */
+  .table {
+    min-width: 600px;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 9px $spacing-sm;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    vertical-align: middle;
+  }
+
+  thead th {
+    padding-top: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+
+  tbody th[scope='row'] {
+    font-weight: 550;
+    color: var(--text-primary);
+  }
+
+  tbody tr:last-child th,
+  tbody tr:last-child td {
+    border-bottom-color: var(--border-primary);
+  }
+
+  tfoot th,
+  tfoot td {
+    border-bottom: 0;
+    font-weight: 650;
+    color: var(--text-primary);
+  }
+
+  .num {
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+.change {
+  color: var(--text-secondary);
+}
+
+.shareCol {
+  width: 30%;
+}
+
+.shareMeter {
+  display: block;
+  height: 6px;
+  border-radius: $radius-full;
+  background: var(--bg-tertiary);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: $radius-full;
+    background: color-mix(in srgb, var(--text-primary) 70%, var(--bg-primary));
+  }
+}
+
+.rowName {
+  overflow-wrap: anywhere;
+}
+
+.rowLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 550;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-decoration-color: var(--border-primary);
+  text-underline-offset: 3px;
+
+  &:hover {
+    text-decoration-color: currentColor;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+.rowMeta {
+  margin-left: 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.liveTag {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: $radius-full;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--viz-success);
+  background: color-mix(in srgb, var(--viz-success) 12%, transparent);
+}
+
+.moreButton {
+  align-self: flex-start;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+}
+
+/* ---------- Provider pools ---------- */
+
+.poolHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $spacing-md $spacing-lg;
+  flex-wrap: wrap;
+}
+
+.poolName {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.poolMeta {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+}
+
+.poolStats {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm $spacing-lg;
+
+  dt {
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-family: $font-mono;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ---------- Unavailable ---------- */
+
+.unavailable {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $spacing-sm;
+  padding: $spacing-xl;
+  border-radius: $radius-lg;
+  border: 1px dashed var(--border-primary);
+  background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
+}
+
+.unavailableTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.unavailableBody {
+  margin: 0;
+  max-width: 64ch;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.unavailableActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-top: $spacing-xs;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.primaryAction,
+.ghostAction {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 16px;
+  border-radius: $radius-full;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:active {
+      transform: none;
+    }
+  }
+}
+
+.primaryAction {
+  border: 0;
+  background: var(--text-primary);
+  color: var(--bg-secondary);
+}
+
+.ghostAction {
+  border: 1px solid var(--border-primary);
+  background: transparent;
+  color: var(--text-primary);
+}
