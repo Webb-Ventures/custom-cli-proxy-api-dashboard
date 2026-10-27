@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import i18n from '@/i18n';
 import { HistoryChart } from '@/features/usage/components/HistoryChart';
+import { UsageTodayStrip } from '@/features/usage/components/UsageTodayStrip';
 import { UsageUnavailable } from '@/features/usage/components/UsageUnavailable';
 import {
   formatChange,
@@ -110,6 +111,31 @@ describe('HistoryChart', () => {
     );
     expect(html).not.toContain('<button type="button"');
     expect(html).toContain('Tokens per hour');
+  });
+});
+
+describe('UsageTodayStrip', () => {
+  const usage = {
+    available: true,
+    tokens: 48_200_000,
+    valueUsd: 186.4,
+    byCredential: new Map(),
+    current: null,
+  };
+
+  test('renders nothing without the plugin', () => {
+    expect(render(createElement(UsageTodayStrip, { usage: { ...usage, available: false } }))).toBe(
+      ''
+    );
+  });
+
+  test("states today's tokens and value and links to today's usage", () => {
+    const html = render(createElement(UsageTodayStrip, { usage }));
+    expect(html).toContain('Usage today');
+    expect(html).toContain('48.2M');
+    expect(html).toContain('$186');
+    expect(html).toContain('None active');
+    expect(html).toContain('href="/usage?range=today"');
   });
 });
 

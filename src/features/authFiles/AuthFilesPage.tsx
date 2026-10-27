@@ -55,6 +55,9 @@ import {
   type AuthFilesSortMode,
 } from '@/features/authFiles/uiState';
 import { useAuthStore, useNotificationStore, useThemeStore } from '@/stores';
+import { useProviderLookup, useUsageToday } from '@/features/usage/hooks/useUsageToday';
+import type { AuthFileItem } from '@/types';
+import { normalizeAuthIndex } from '@/utils/authIndex';
 import styles from './AuthFilesPage.module.scss';
 
 const DEFAULT_REGULAR_PAGE_SIZE = 9;
@@ -153,6 +156,15 @@ export function AuthFilesPage() {
     batchSetStatus,
     batchDelete,
   } = useAuthFilesData({ onFilesMutated: invalidateDerivedCaches });
+  const usageToday = useUsageToday(useProviderLookup(files));
+  const usageTodayFor = (file: AuthFileItem) => {
+    if (!usageToday.available) return undefined;
+    const authIndex = normalizeAuthIndex(file['auth_index'] ?? file.authIndex);
+    const today = authIndex ? usageToday.byCredential.get(authIndex) : undefined;
+    return authIndex && today
+      ? { authIndex, tokens: today.tokens, valueUsd: today.valueUsd }
+      : null;
+  };
 
   const statusBarCache = useAuthFilesStatusBarCache(files);
 
@@ -715,6 +727,7 @@ export function AuthFilesPage() {
                 cooldownResetting={cooldownResetting}
                 quotaFilterType={activeQuotaFilter}
                 statusBarCache={statusBarCache}
+                usageToday={usageTodayFor(file)}
                 entranceDelayMs={cardEntranceDelay(index)}
                 onShowModels={showModels}
                 onDownload={handleDownload}

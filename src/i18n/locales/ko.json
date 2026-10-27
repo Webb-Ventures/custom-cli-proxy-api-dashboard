@@ -2534,6 +2534,16 @@
     "pool_segment": "{{name}} 약 {{capacity}} 중 {{percent}}%",
     "capacity_note": "추정치는 한도 재설정 이후 토큰을 사용 비율로 나눈 값입니다. 프록시 밖의 사용은 용량을 실제보다 작게 보이게 합니다.",
     "pool_unestimated_one": "계정 {{count}}개는 제외됨: 이 한도의 측정값이 없거나 사용량이 5% 미만입니다.",
-    "pool_unestimated_other": "계정 {{count}}개는 제외됨: 이 한도의 측정값이 없거나 사용량이 5% 미만입니다."
+    "pool_unestimated_other": "계정 {{count}}개는 제외됨: 이 한도의 측정값이 없거나 사용량이 5% 미만입니다.",
+    "today_title": "오늘 사용량",
+    "today_value": "API 가치",
+    "today_block": "{{tokens}}, {{end}}까지 ~{{projected}}",
+    "today_block_idle": "활성 블록 없음",
+    "today_open": "사용량 열기",
+    "card_today": "오늘",
+    "card_today_value": "{{tokens}} 토큰, {{value}}",
+    "card_today_open": "이 자격 증명의 오늘 사용량 열기",
+    "quota_since_reset": "{{window}} 재설정 이후: {{tokens}} 토큰, {{value}}.",
+    "quota_left": "약 {{tokens}} 남음(추정)."
   }
 }

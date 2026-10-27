@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { getAuthFileRefreshKey } from '@/features/authFiles/manualRefresh';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { SelectionCheckbox } from '@/components/ui/SelectionCheckbox';
@@ -42,6 +43,7 @@ import { useFileHeadroom } from '@/features/quota/hooks/useFileHeadroom';
 import { AuthFileCooldownSection } from './AuthFileCooldownSection';
 import { getSiwcBindingStatus, supportsSiwcBinding } from '@/features/oauth/siwcBinding';
 import { SiwcStatusBadge } from '@/features/oauth/components/SiwcStatusBadge';
+import { formatMoney, formatTokens } from '@/features/usage/format';
 import styles from './AuthFileCard.module.scss';
 
 export type AuthFileCardProps = {
@@ -56,6 +58,8 @@ export type AuthFileCardProps = {
   cooldownResetting: Record<string, boolean>;
   quotaFilterType: AuthFileQuotaFilter;
   statusBarCache: Map<string, AuthFileStatusBarData>;
+  /** Today's tokens and value from the Usage Ledger plugin; absent without it. */
+  usageToday?: { authIndex: string; tokens: number; valueUsd: number } | null;
   /** One-time entrance delay; null/undefined disables entrance motion. */
   entranceDelayMs?: number | null;
   onShowModels: (file: AuthFileItem) => void;
@@ -82,6 +86,7 @@ export function AuthFileCard(props: AuthFileCardProps) {
     cooldownResetting,
     quotaFilterType,
     statusBarCache,
+    usageToday,
     entranceDelayMs,
     onShowModels,
     onDownload,
@@ -231,6 +236,21 @@ export function AuthFileCard(props: AuthFileCardProps) {
           </span>
         </div>
         <ProviderStatusBar statusData={statusData} styles={styles} />
+        {usageToday && usageToday.tokens > 0 && (
+          <Link
+            className={styles.usageToday}
+            to={`/usage?range=today&credential=${encodeURIComponent(usageToday.authIndex)}`}
+            title={t('usage.card_today_open')}
+          >
+            <span className={styles.healthLabel}>{t('usage.card_today')}</span>
+            <span className={styles.usageTodayValue}>
+              {t('usage.card_today_value', {
+                tokens: formatTokens(usageToday.tokens),
+                value: formatMoney(usageToday.valueUsd, i18n.language),
+              })}
+            </span>
+          </Link>
+        )}
       </div>
 
       <div className={styles.metaRow}>

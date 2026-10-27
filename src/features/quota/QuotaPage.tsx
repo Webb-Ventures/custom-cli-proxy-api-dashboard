@@ -55,6 +55,9 @@ import { useDevinQuotaAutoLoad } from './providers/devin/useDevinQuotaAutoLoad';
 import { useQuotaActions } from './hooks/useQuotaActions';
 import { useQuotaAutoRefresh } from './hooks/useQuotaAutoRefresh';
 import { useCredentialHeadroom } from './hooks/useCredentialHeadroom';
+import { useUsageCapacity } from '@/features/usage/hooks/useUsageCapacity';
+import { useLedgerPlugin } from '@/features/usage/hooks/useUsageLedger';
+import { normalizeAuthIndex } from '@/utils/authIndex';
 import { useQuotaBatchLoader } from './hooks/useQuotaBatchLoader';
 import { readQuotaUiState, writeQuotaUiState } from './uiState';
 import styles from './QuotaPage.module.scss';
@@ -191,6 +194,19 @@ export function QuotaPage() {
    * summarized: tightest limit, pace, run-out and availability. */
 
   const { headroomFor } = useCredentialHeadroom(entries, now);
+  const ledger = useLedgerPlugin();
+  const ledgerCapacity = useUsageCapacity({
+    files,
+    prices: ledger.prices,
+    enabled: ledger.availability === 'available',
+    now,
+    // Tokens since reset keep growing while the page is open; re-read every 5 minutes.
+    reloadKey: Math.floor(now / (5 * 60_000)),
+  });
+  const sinceResetFor = (entry: QuotaFileEntry) => {
+    const authIndex = normalizeAuthIndex(entry.file['auth_index'] ?? entry.file.authIndex);
+    return authIndex ? ledgerCapacity.byAuthIndex.get(authIndex) : undefined;
+  };
   const headroomSummaryFor = useCallback(
     (entry: QuotaFileEntry) => headroomFor(entry)?.summary,
     [headroomFor]
@@ -526,6 +542,7 @@ export function QuotaPage() {
                 canRefresh={canUseActions && !entry.file.disabled}
                 resetting={resettingQuotaName === getQuotaCacheKey(entry.file)}
                 headroom={headroomFor(entry)}
+                sinceReset={sinceResetFor(entry)}
                 now={now}
                 entranceDelayMs={cardEntranceDelay(index)}
                 onRefresh={() => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}

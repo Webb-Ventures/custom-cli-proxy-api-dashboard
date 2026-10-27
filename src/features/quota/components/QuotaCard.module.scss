@@ -318,6 +318,16 @@
   min-width: 0;
 }
 
+/* Usage Ledger: tokens and value since the limit reset, under the windows. */
+.ledgerLine {
+  margin: 0;
+  font-family: $font-mono;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 .freshness {
   font-size: 11px;
   color: var(--text-tertiary);

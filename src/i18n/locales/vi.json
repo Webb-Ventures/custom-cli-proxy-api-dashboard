@@ -2540,6 +2540,16 @@
     "pool_segment": "{{name}} {{percent}}% của khoảng {{capacity}}",
     "capacity_note": "Ước tính lấy token kể từ khi giới hạn đặt lại chia cho phần trăm đã dùng. Dùng ngoài proxy khiến dung lượng trông nhỏ hơn thực tế.",
     "pool_unestimated_one": "{{count}} tài khoản không được tính: chưa có số liệu cho giới hạn này hoặc dùng dưới 5%.",
-    "pool_unestimated_other": "{{count}} tài khoản không được tính: chưa có số liệu cho giới hạn này hoặc dùng dưới 5%."
+    "pool_unestimated_other": "{{count}} tài khoản không được tính: chưa có số liệu cho giới hạn này hoặc dùng dưới 5%.",
+    "today_title": "Mức sử dụng hôm nay",
+    "today_value": "Giá trị API",
+    "today_block": "{{tokens}}, ~{{projected}} lúc {{end}}",
+    "today_block_idle": "Không có khối nào",
+    "today_open": "Mở mức sử dụng",
+    "card_today": "Hôm nay",
+    "card_today_value": "{{tokens}} token, {{value}}",
+    "card_today_open": "Mở mức sử dụng hôm nay của thông tin xác thực này",
+    "quota_since_reset": "{{window}}, từ khi đặt lại: {{tokens}} token, {{value}}.",
+    "quota_left": "Còn khoảng {{tokens}} (ước tính)."
   }
 }

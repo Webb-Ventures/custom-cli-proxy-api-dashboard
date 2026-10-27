@@ -32,6 +32,8 @@ import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
 import { ClaudeResetGrantDetails } from '../providers/claude/ClaudeResetGrantDetails';
 import { hasClaudeUsageData } from '../providers/claude/data';
 import bodyStyles from './QuotaBody.module.scss';
+import type { AccountCapacity } from '@/features/usage/capacity';
+import { formatMoney, formatTokens } from '@/features/usage/format';
 import styles from './QuotaCard.module.scss';
 
 /** Bind the quota-page styles to the shared rendering contract. */
@@ -53,6 +55,8 @@ export type QuotaCardProps = {
   /** Merged headroom; absent or windowless until any reading exists. */
   headroom?: QuotaCardHeadroom;
   now: number;
+  /** Ledger tokens since the longest limit window reset; absent without the Usage Ledger plugin. */
+  sinceReset?: AccountCapacity;
   /** Initial cascade delay; null disables entrance motion for later mounts. */
   entranceDelayMs?: number | null;
   onRefresh: () => void;
@@ -68,6 +72,7 @@ export function QuotaCard(props: QuotaCardProps) {
     resetting,
     headroom,
     now,
+    sinceReset,
     entranceDelayMs,
     onRefresh,
     onReset,
@@ -199,6 +204,20 @@ export function QuotaCard(props: QuotaCardProps) {
         {showHeadroom && summary ? (
           <>
             <HeadroomWindows summary={summary} classes={quotaClasses} now={now} />
+            {sinceReset && sinceReset.tokensSinceReset > 0 && (
+              <p className={styles.ledgerLine}>
+                {t('usage.quota_since_reset', {
+                  window: sinceReset.window.labelKey
+                    ? t(sinceReset.window.labelKey, sinceReset.window.labelParams ?? {})
+                    : sinceReset.window.label || sinceReset.window.id,
+                  tokens: formatTokens(sinceReset.tokensSinceReset),
+                  value: formatMoney(sinceReset.valueSinceResetUsd, i18n.language),
+                })}
+                {sinceReset.tokensLeft !== null &&
+                  sinceReset.tokensLeft > 0 &&
+                  ` ${t('usage.quota_left', { tokens: formatTokens(sinceReset.tokensLeft) })}`}
+              </p>
+            )}
             {hasBodyData && quota && (
               <adapter.Body
                 quota={quota}

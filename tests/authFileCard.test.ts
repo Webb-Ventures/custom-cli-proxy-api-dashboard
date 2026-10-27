@@ -79,4 +79,11 @@ describe('auth file card presentation contract', () => {
     expect(source).toContain('showManualRefreshButton');
     expect(source).toContain('file.disabled ||');
   });
+
+  test("today's ledger usage links to Usage filtered to the credential, only with traffic", () => {
+    expect(source).toContain('usageToday && usageToday.tokens > 0 &&');
+    expect(source).toContain(
+      'to={`/usage?range=today&credential=${encodeURIComponent(usageToday.authIndex)}`}'
+    );
+  });
 });

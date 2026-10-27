@@ -2547,6 +2547,16 @@
     "pool_label": "{{provider}} 資源池：{{accounts}}",
     "pool_segment": "{{name}}：約 {{capacity}} 中已用 {{percent}}%",
     "capacity_note": "估算方式：限額重置以來的 Token 除以已用百分比。代理之外的使用會讓容量看起來偏小。",
-    "pool_unestimated": "{{count}} 個帳號未計入：沒有此限額的讀數，或用量不足 5%。"
+    "pool_unestimated": "{{count}} 個帳號未計入：沒有此限額的讀數，或用量不足 5%。",
+    "today_title": "今日用量",
+    "today_value": "API 價值",
+    "today_block": "{{tokens}}，到 {{end}} 約 {{projected}}",
+    "today_block_idle": "無活躍區塊",
+    "today_open": "開啟用量",
+    "card_today": "今日",
+    "card_today_value": "{{tokens}} Token，{{value}}",
+    "card_today_open": "開啟此憑證的今日用量",
+    "quota_since_reset": "{{window}}重置以來：{{tokens}} Token，{{value}}。",
+    "quota_left": "估算約剩 {{tokens}}。"
   }
 }

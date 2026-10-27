@@ -20,6 +20,8 @@ import { useCredentialHeadroom } from '@/features/quota/hooks/useCredentialHeadr
 import { useQuotaAutoRefresh } from '@/features/quota/hooks/useQuotaAutoRefresh';
 import quotaBodyStyles from '@/features/quota/components/QuotaBody.module.scss';
 import { bindQuotaClasses } from '@/features/quota/types';
+import { UsageTodayStrip } from '@/features/usage/components/UsageTodayStrip';
+import { useProviderLookup, useUsageToday } from '@/features/usage/hooks/useUsageToday';
 import { useDashboardOverview } from './hooks/useDashboardOverview';
 import { summarizeFleetHeadroom, type HeadroomRow } from './headroomOverview';
 import { LiveWire } from './components/LiveWire';
@@ -81,6 +83,7 @@ export function DashboardPage() {
   const now = useNow();
   const { headroomFor } = useCredentialHeadroom(quotaEntries, now);
   useQuotaAutoRefresh(quotaEntries, !connected || !authFiles);
+  const usageToday = useUsageToday(useProviderLookup(authFiles));
 
   const fleet = useMemo(() => {
     const rows: HeadroomRow<QuotaFileEntry>[] = [];
@@ -491,6 +494,9 @@ export function DashboardPage() {
           </article>
         ))}
       </section>
+
+      {/* ---------- Usage today (Usage Ledger plugin only) ---------- */}
+      <UsageTodayStrip usage={usageToday} />
 
       {/* ---------- Traffic ---------- */}
       <section className={styles.section} ref={trafficRef}>

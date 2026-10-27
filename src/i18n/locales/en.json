@@ -2534,6 +2534,16 @@
     "pool_segment": "{{name}} {{percent}}% of about {{capacity}}",
     "capacity_note": "Estimates divide tokens since the limit reset by the percent used. Use outside the proxy makes capacity look smaller than it is.",
     "pool_unestimated_one": "{{count}} account isn't counted: no reading for this limit, or under 5% used.",
-    "pool_unestimated_other": "{{count}} accounts aren't counted: no reading for this limit, or under 5% used."
+    "pool_unestimated_other": "{{count}} accounts aren't counted: no reading for this limit, or under 5% used.",
+    "today_title": "Usage today",
+    "today_value": "API value",
+    "today_block": "{{tokens}}, ~{{projected}} by {{end}}",
+    "today_block_idle": "None active",
+    "today_open": "Open usage",
+    "card_today": "Today",
+    "card_today_value": "{{tokens}} tokens, {{value}}",
+    "card_today_open": "Open today's usage for this credential",
+    "quota_since_reset": "{{window}}, since reset: {{tokens}} tokens, {{value}}.",
+    "quota_left": "About {{tokens}} left (estimate)."
   }
 }
