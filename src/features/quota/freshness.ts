@@ -11,6 +11,7 @@ import { getQuotaCacheKey } from '@/utils/quota/identity';
 import {
   headroomWindowsFromObservation,
   headroomWindowsFromQuota,
+  type HeadroomSummary,
   type HeadroomWindow,
 } from './headroom';
 import type { QuotaFileEntry } from './logic';
@@ -26,6 +27,11 @@ export const PASSIVE_FRESH_MS = 10 * MINUTE_MS;
 export const AUTO_REFRESH_ERROR_BACKOFF_MS = 15 * MINUTE_MS;
 
 export type HeadroomSource = 'active' | 'passive' | 'mixed';
+
+/** A credential's headroom summary plus where and when its deciding reading came from. */
+export type SummarizedHeadroom = Pick<CredentialHeadroom, 'seenAtMs' | 'seenFrom'> & {
+  summary: HeadroomSummary;
+};
 
 export interface CredentialHeadroom {
   windows: HeadroomWindow[];

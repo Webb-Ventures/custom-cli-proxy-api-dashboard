@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import i18n from '@/i18n';
@@ -15,8 +15,15 @@ const classes = bindQuotaClasses(
 const HOUR = 3_600_000;
 const now = Date.parse('2026-10-27T12:00:00Z');
 
+// Other suites assume the default language, so put it back afterwards.
+const previousLanguage = i18n.language;
+
 beforeAll(async () => {
   await i18n.changeLanguage('en');
+});
+
+afterAll(async () => {
+  await i18n.changeLanguage(previousLanguage);
 });
 
 describe('quotaMeterModel', () => {

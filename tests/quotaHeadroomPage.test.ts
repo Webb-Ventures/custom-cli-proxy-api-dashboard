@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import i18n from '@/i18n';
@@ -47,8 +47,15 @@ const cooldown: AuthFileCooldownSnapshot = {
 
 const entry = (name: string): QuotaFileEntry => ({ type: 'claude', file: { name } });
 
+// Other suites assume the default language, so put it back afterwards.
+const previousLanguage = i18n.language;
+
 beforeAll(async () => {
   await i18n.changeLanguage('en');
+});
+
+afterAll(async () => {
+  await i18n.changeLanguage(previousLanguage);
 });
 
 describe('pressure sort and headroom filters', () => {

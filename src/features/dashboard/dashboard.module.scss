@@ -314,6 +314,21 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Headroom counts under the verdict: the reasons behind the headline. */
+.heroHeadroomMeta {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Which credential comes back and why. */
+.heroCapacityReason {
+  margin-top: $spacing-sm;
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
 .heroPanelMeta {
   font-family: $font-mono;
   font-size: 12px;
@@ -550,113 +565,6 @@
   text-align: center;
   font-size: 13px;
   color: var(--text-tertiary);
-}
-
-/* ---------- 供应商列表 ---------- */
-
-.fleetList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.fleetRow {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1.3fr) minmax(80px, 1fr) auto minmax(96px, 0.7fr);
-  align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-md 0;
-  border-bottom: 1px solid var(--border-color);
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  @media (max-width: 760px) {
-    grid-template-columns: minmax(0, 1fr) auto;
-    row-gap: $spacing-sm;
-  }
-}
-
-/* 列表按流量排序，位次是真实信息 */
-.fleetRank {
-  font-family: $font-mono;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-quaternary);
-  font-variant-numeric: tabular-nums;
-
-  @media (max-width: 760px) {
-    display: none;
-  }
-}
-
-.fleetIdentity {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.fleetName {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  @include text-ellipsis;
-}
-
-.fleetMeta {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.fleetSpark {
-  height: 28px;
-
-  @media (max-width: 760px) {
-    grid-column: 1 / -1;
-    order: 3;
-  }
-}
-
-.fleetNumbers {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-}
-
-.fleetTotal {
-  font-family: $font-mono;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-.fleetTotalLabel {
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-.fleetRate {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.fleetRateValue {
-  font-family: $font-mono;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-.fleetMeter {
-  height: 5px;
 }
 
 /* ---------- 双栏细节区 ---------- */

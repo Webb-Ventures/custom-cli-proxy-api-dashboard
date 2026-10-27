@@ -9,19 +9,31 @@ import {
   IconSidebarQuota,
   IconSidebarSystem,
 } from '@/components/ui/icons';
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useThemeStore } from '@/stores';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
+import { useNow } from '@/hooks/useNow';
 import { formatCompactNumber, formatDateValue, formatPercent } from '@/utils/format';
+import { formatInstantShort, formatRelativeInstant } from '@/utils/quota';
+import { getQuotaDisplayName } from '@/utils/quota/identity';
+import { MINUTE_MS } from '@/utils/time/durations';
+import { useCredentialHeadroom } from '@/features/quota/hooks/useCredentialHeadroom';
+import { useQuotaAutoRefresh } from '@/features/quota/hooks/useQuotaAutoRefresh';
+import quotaBodyStyles from '@/features/quota/components/QuotaBody.module.scss';
+import { bindQuotaClasses } from '@/features/quota/types';
 import { useDashboardOverview } from './hooks/useDashboardOverview';
+import { summarizeFleetHeadroom, type HeadroomRow } from './headroomOverview';
 import { LiveWire } from './components/LiveWire';
 import { Meter } from './components/Meter';
-import { Sparkline } from './components/Sparkline';
+import { PressureBoard } from './components/PressureBoard';
 import { ThroughputChart } from './components/ThroughputChart';
 import { useCountUp, useRevealGroup, useRevealOnScroll } from '@/hooks/motion';
 import { providerLabel, splitWindowMinutes, toneForSuccessRate, type MeterTone } from './utils';
+import type { QuotaFileEntry } from '@/features/quota/logic';
 import styles from './dashboard.module.scss';
 
 const DASH = '—';
+
+const quotaClasses = bindQuotaClasses(quotaBodyStyles, 'QuotaBody.module.scss');
 
 /** KPI 卡左上角色签：有语义色调的卡用状态色，其余保持中性 */
 const TILE_ACCENTS: Record<MeterTone, string> = {
@@ -35,21 +47,56 @@ const TILE_ACCENTS: Record<MeterTone, string> = {
 const formatHeadline = (value: number): string =>
   value < 100_000 ? value.toLocaleString() : formatCompactNumber(value);
 
+/** Clock time for today, date and time otherwise. */
+const formatCapacityTime = (ms: number, now: number): string => {
+  const date = new Date(ms);
+  if (date.toDateString() !== new Date(now).toDateString()) return formatInstantShort(ms);
+  return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+};
+
+/** Weekly pool tone: the same 70/90 bands the quota meters use for percent used. */
+const toneForUsedPercent = (used: number): MeterTone =>
+  used >= 90 ? 'critical' : used >= 70 ? 'warning' : 'good';
+
 export function DashboardPage() {
   const { t, i18n } = useTranslation();
   const serverVersion = useAuthStore((state) => state.serverVersion);
   const serverBuildDate = useAuthStore((state) => state.serverBuildDate);
 
-  const { connectionStatus, connected, config, counts, traffic, providers, credentials, refresh } =
-    useDashboardOverview();
+  const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
+  const {
+    connectionStatus,
+    connected,
+    config,
+    authFiles,
+    quotaEntries,
+    counts,
+    traffic,
+    credentials,
+    refresh,
+  } = useDashboardOverview();
 
   useHeaderRefresh(refresh, connected);
+
+  const now = useNow();
+  const { headroomFor } = useCredentialHeadroom(quotaEntries, now);
+  useQuotaAutoRefresh(quotaEntries, !connected || !authFiles);
+
+  const fleet = useMemo(() => {
+    const rows: HeadroomRow<QuotaFileEntry>[] = [];
+    quotaEntries.forEach((entry) => {
+      const headroom = headroomFor(entry);
+      if (headroom) rows.push({ item: entry, headroom });
+    });
+    return summarizeFleetHeadroom(rows);
+  }, [quotaEntries, headroomFor]);
+  const hasHeadroom = connected && fleet.total > 0;
 
   /* Hero 与静态网格走分组级联；异步内容区（图表/供应商）保持整块 reveal */
   const heroRef = useRevealGroup<HTMLElement>();
   const statsRef = useRevealGroup<HTMLElement>(0.12);
   const trafficRef = useRevealOnScroll<HTMLElement>();
-  const fleetRef = useRevealOnScroll<HTMLElement>();
+  const pressureRef = useRevealOnScroll<HTMLElement>();
   const detailRef = useRevealGroup<HTMLElement>();
   const ctaRef = useRevealGroup<HTMLElement>();
 
@@ -89,6 +136,20 @@ export function DashboardPage() {
         ? { key: 'hero_verdict_connecting', accent: 'var(--amber-color)' }
         : { key: 'hero_verdict_offline', accent: 'var(--text-quaternary)' };
     }
+    if (fleet.total > 0) {
+      const blocked = fleet.cooling + fleet.exhausted;
+      const params = { room: fleet.withRoom, total: fleet.total };
+      if (fleet.withRoom === 0) {
+        return { text: t('dashboard.headroom_verdict_none'), accent: TILE_ACCENTS.critical };
+      }
+      return {
+        text:
+          blocked === 0
+            ? t('dashboard.headroom_verdict_all', params)
+            : t('dashboard.headroom_verdict', params),
+        accent: blocked > 0 || fleet.ahead > 0 ? TILE_ACCENTS.warning : TILE_ACCENTS.good,
+      };
+    }
     if (traffic.total === 0 || traffic.successRate === null) {
       return { key: 'hero_verdict_idle', accent: 'var(--text-quaternary)' };
     }
@@ -99,7 +160,7 @@ export function DashboardPage() {
       idle: 'hero_verdict_idle',
     };
     return { key: keyByTone[successRateTone], accent: TILE_ACCENTS[successRateTone] };
-  }, [connected, connectionStatus, traffic.total, traffic.successRate, successRateTone]);
+  }, [connected, connectionStatus, fleet, traffic.total, traffic.successRate, successRateTone, t]);
 
   /* 句号状态灯只在「有活着的流量」时呼吸；离线/静默时保持安静 */
   const heroAlive = connected && traffic.total > 0;
@@ -114,15 +175,83 @@ export function DashboardPage() {
   const versionLabel = serverVersion ? `v${serverVersion.trim().replace(/^[vV]+/, '')}` : null;
   const heroMetaLine = [versionLabel, connectionLabel].filter(Boolean).join(' · ');
 
-  const statTiles = [
+  const headroomMetaLine = useMemo(() => {
+    if (!hasHeadroom) return null;
+    const parts: string[] = [];
+    if (fleet.ahead > 0) parts.push(t('dashboard.headroom_meta_ahead', { count: fleet.ahead }));
+    if (fleet.cooling > 0)
+      parts.push(t('dashboard.headroom_meta_cooling', { count: fleet.cooling }));
+    if (fleet.exhausted > 0) {
+      parts.push(t('dashboard.headroom_meta_exhausted', { count: fleet.exhausted }));
+    }
+    if (fleet.latestSeenAtMs !== null) {
+      parts.push(
+        now - fleet.latestSeenAtMs < MINUTE_MS
+          ? t('dashboard.headroom_meta_seen_now')
+          : t('dashboard.headroom_meta_seen', {
+              time: formatRelativeInstant(fleet.latestSeenAtMs, now, i18n.resolvedLanguage),
+            })
+      );
+    }
+    return parts.join(', ');
+  }, [hasHeadroom, fleet, now, t, i18n.resolvedLanguage]);
+
+  const nextCapacity = hasHeadroom ? fleet.next : null;
+  const nextCapacityReason = (() => {
+    if (!nextCapacity) return '';
+    const name = getQuotaDisplayName(nextCapacity.item.file);
+    if (nextCapacity.reason === 'cooldown' || !nextCapacity.window) {
+      return t('dashboard.next_capacity_cooldown', { name });
+    }
+    const { window } = nextCapacity;
+    const label = window.labelKey
+      ? t(window.labelKey, window.labelParams ?? {})
+      : window.label || window.id;
+    return t('dashboard.next_capacity_window', { name, window: label });
+  })();
+
+  const successTile = {
+    key: 'success',
+    label: t('dashboard.success_rate'),
+    value: traffic.successRate === null ? DASH : formatPercent(traffic.successRate),
+    hint: t('dashboard.stat_success_hint', { total: traffic.total.toLocaleString() }),
+    meter: traffic.successRate,
+    tone: successRateTone,
+  };
+  const unavailable = fleet.cooling + fleet.exhausted;
+  const headroomTiles = [
     {
-      key: 'success',
-      label: t('dashboard.success_rate'),
-      value: traffic.successRate === null ? DASH : formatPercent(traffic.successRate),
-      hint: t('dashboard.stat_success_hint', { total: traffic.total.toLocaleString() }),
-      meter: traffic.successRate,
-      tone: successRateTone,
+      key: 'ahead',
+      label: t('dashboard.kpi_ahead'),
+      value: fleet.ahead.toLocaleString(),
+      hint: t('dashboard.kpi_ahead_hint'),
+      meter: null,
+      tone: (fleet.ahead > 0 ? 'warning' : 'good') as MeterTone,
     },
+    {
+      key: 'unavailable',
+      label: t('dashboard.kpi_unavailable'),
+      value: unavailable.toLocaleString(),
+      hint: t('dashboard.kpi_unavailable_hint'),
+      meter: null,
+      tone: (unavailable > 0 ? 'critical' : 'good') as MeterTone,
+    },
+    {
+      key: 'weeklyPool',
+      label: t('dashboard.kpi_weekly_pool'),
+      value: fleet.weeklyPoolUsed === null ? DASH : formatPercent(fleet.weeklyPoolUsed),
+      hint:
+        fleet.weeklyPoolUsed === null
+          ? t('dashboard.kpi_weekly_pool_empty')
+          : t('dashboard.kpi_weekly_pool_hint', { count: fleet.weeklyCount }),
+      meter: fleet.weeklyPoolUsed,
+      tone: fleet.weeklyPoolUsed === null ? undefined : toneForUsedPercent(fleet.weeklyPoolUsed),
+    },
+    successTile,
+  ];
+
+  const trafficTiles = [
+    successTile,
     {
       key: 'credentials',
       label: t('dashboard.stat_credentials'),
@@ -156,6 +285,7 @@ export function DashboardPage() {
       tone: undefined,
     },
   ];
+  const statTiles = hasHeadroom ? headroomTiles : trafficTiles;
 
   const runtimeRows: Array<{ label: string; value: string; mono?: boolean }> = [
     { label: t('dashboard.runtime_routing'), value: routingStrategy },
@@ -232,7 +362,7 @@ export function DashboardPage() {
       <section className={styles.hero} ref={heroRef}>
         <div className={styles.heroCopy}>
           <h1 className={styles.heroTitle} data-reveal>
-            {t(`dashboard.${verdict.key}`)}
+            {'text' in verdict ? verdict.text : t(`dashboard.${verdict.key}`)}
             <span
               className={`${styles.heroPeriod} ${heroAlive ? styles.heroPeriodLive : ''}`}
               style={{ color: verdict.accent }}
@@ -240,6 +370,11 @@ export function DashboardPage() {
               {t('dashboard.hero_period')}
             </span>
           </h1>
+          {headroomMetaLine && (
+            <p className={styles.heroHeadroomMeta} data-reveal>
+              {headroomMetaLine}
+            </p>
+          )}
           <p className={styles.heroMeta} data-reveal>
             {heroMetaLine}
           </p>
@@ -256,51 +391,70 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div className={styles.heroPanel} data-reveal="scale">
-          <div className={styles.heroPanelTop}>
-            <span className={styles.heroPanelLabel}>{t('dashboard.hero_requests_label')}</span>
-            {connected && (
-              <span className={styles.liveBadge}>
-                <i className={styles.liveDot} aria-hidden="true" />
-                {t('dashboard.hero_live')}
+        {nextCapacity ? (
+          <div className={styles.heroPanel} data-reveal="scale">
+            <div className={styles.heroPanelTop}>
+              <span className={styles.heroPanelLabel}>{t('dashboard.next_capacity_label')}</span>
+            </div>
+            <strong className={styles.heroFigure}>
+              {nextCapacity.atMs === null
+                ? t('dashboard.next_capacity_unknown')
+                : formatCapacityTime(nextCapacity.atMs, now)}
+            </strong>
+            {nextCapacity.atMs !== null && (
+              <span className={styles.heroPanelMeta}>
+                {formatRelativeInstant(nextCapacity.atMs, now, i18n.resolvedLanguage)}
               </span>
             )}
+            <span className={styles.heroCapacityReason}>{nextCapacityReason}</span>
           </div>
-          <strong className={styles.heroFigure}>
-            {connected ? formatHeadline(animatedTotal) : DASH}
-          </strong>
-          <span className={styles.heroPanelMeta}>
-            {t('dashboard.hero_window_meta', { window: windowLabel })}
-          </span>
-          {traffic.total > 0 && (
-            <div className={styles.ratioBar} aria-hidden="true">
-              {traffic.totalSuccess > 0 && (
-                <span
-                  className={`${styles.ratioSegment} ${styles.splitSuccess}`}
-                  style={{ flexGrow: traffic.totalSuccess }}
-                />
-              )}
-              {traffic.totalFailure > 0 && (
-                <span
-                  className={`${styles.ratioSegment} ${styles.splitFailure}`}
-                  style={{ flexGrow: traffic.totalFailure }}
-                />
+        ) : (
+          <div className={styles.heroPanel} data-reveal="scale">
+            <div className={styles.heroPanelTop}>
+              <span className={styles.heroPanelLabel}>{t('dashboard.hero_requests_label')}</span>
+              {connected && (
+                <span className={styles.liveBadge}>
+                  <i className={styles.liveDot} aria-hidden="true" />
+                  {t('dashboard.hero_live')}
+                </span>
               )}
             </div>
-          )}
-          <div className={styles.heroSplit}>
-            <span className={styles.heroSplitItem}>
-              <i className={`${styles.splitSwatch} ${styles.splitSuccess}`} aria-hidden="true" />
-              {t('stats.success')}
-              <b>{traffic.totalSuccess.toLocaleString()}</b>
+            <strong className={styles.heroFigure}>
+              {connected ? formatHeadline(animatedTotal) : DASH}
+            </strong>
+            <span className={styles.heroPanelMeta}>
+              {t('dashboard.hero_window_meta', { window: windowLabel })}
             </span>
-            <span className={styles.heroSplitItem}>
-              <i className={`${styles.splitSwatch} ${styles.splitFailure}`} aria-hidden="true" />
-              {t('stats.failure')}
-              <b>{traffic.totalFailure.toLocaleString()}</b>
-            </span>
+            {traffic.total > 0 && (
+              <div className={styles.ratioBar} aria-hidden="true">
+                {traffic.totalSuccess > 0 && (
+                  <span
+                    className={`${styles.ratioSegment} ${styles.splitSuccess}`}
+                    style={{ flexGrow: traffic.totalSuccess }}
+                  />
+                )}
+                {traffic.totalFailure > 0 && (
+                  <span
+                    className={`${styles.ratioSegment} ${styles.splitFailure}`}
+                    style={{ flexGrow: traffic.totalFailure }}
+                  />
+                )}
+              </div>
+            )}
+            <div className={styles.heroSplit}>
+              <span className={styles.heroSplitItem}>
+                <i className={`${styles.splitSwatch} ${styles.splitSuccess}`} aria-hidden="true" />
+                {t('stats.success')}
+                <b>{traffic.totalSuccess.toLocaleString()}</b>
+              </span>
+              <span className={styles.heroSplitItem}>
+                <i className={`${styles.splitSwatch} ${styles.splitFailure}`} aria-hidden="true" />
+                {t('stats.failure')}
+                <b>{traffic.totalFailure.toLocaleString()}</b>
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className={styles.heroWire}>
           <LiveWire
@@ -352,56 +506,20 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* ---------- Provider fleet ---------- */}
-      <section className={styles.section} ref={fleetRef}>
+      {/* ---------- Headroom pressure ---------- */}
+      <section className={styles.section} ref={pressureRef}>
         <header className={styles.sectionHead}>
-          <span className={styles.eyebrow}>{t('dashboard.fleet_eyebrow')}</span>
-          <h2 className={styles.sectionTitle}>{t('dashboard.fleet_title')}</h2>
-          <p className={styles.sectionDescription}>{t('dashboard.fleet_description')}</p>
+          <span className={styles.eyebrow}>{t('dashboard.pressure_eyebrow')}</span>
+          <h2 className={styles.sectionTitle}>{t('dashboard.pressure_title')}</h2>
+          <p className={styles.sectionDescription}>{t('dashboard.pressure_description')}</p>
         </header>
         <div className={styles.panel}>
-          {providers.length === 0 ? (
-            <p className={styles.emptyNote}>{t('dashboard.fleet_empty')}</p>
-          ) : (
-            <ul className={styles.fleetList}>
-              {providers.map((provider, index) => (
-                <li key={provider.id} className={styles.fleetRow}>
-                  <span className={styles.fleetRank} aria-hidden="true">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <div className={styles.fleetIdentity}>
-                    <span className={styles.fleetName}>
-                      {providerLabel(provider.id, unknownProviderLabel)}
-                    </span>
-                    <span className={styles.fleetMeta}>
-                      {t('dashboard.fleet_credentials', { value: provider.credentials })}
-                    </span>
-                  </div>
-                  <Sparkline
-                    points={provider.buckets.map((bucket) => bucket.success + bucket.failed)}
-                    ariaLabel={t('dashboard.fleet_spark_label', {
-                      provider: providerLabel(provider.id, unknownProviderLabel),
-                    })}
-                    className={styles.fleetSpark}
-                  />
-                  <div className={styles.fleetNumbers}>
-                    <span className={styles.fleetTotal}>{provider.total.toLocaleString()}</span>
-                    <span className={styles.fleetTotalLabel}>{t('dashboard.fleet_requests')}</span>
-                  </div>
-                  <div className={styles.fleetRate}>
-                    <span className={styles.fleetRateValue}>
-                      {provider.successRate === null ? DASH : formatPercent(provider.successRate)}
-                    </span>
-                    <Meter
-                      value={provider.successRate}
-                      ariaLabel={t('dashboard.success_rate')}
-                      className={styles.fleetMeter}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <PressureBoard
+            rows={connected ? fleet.ranked : []}
+            now={now}
+            resolvedTheme={resolvedTheme}
+            classes={quotaClasses}
+          />
         </div>
       </section>
 

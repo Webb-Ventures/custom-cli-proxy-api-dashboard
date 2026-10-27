@@ -22,7 +22,7 @@ import {
   isThemeSurfaceIconProvider,
 } from '@/features/authFiles/constants';
 import { bindQuotaClasses } from '../types';
-import type { CredentialHeadroom } from '../freshness';
+import type { SummarizedHeadroom } from '../freshness';
 import type { HeadroomSummary } from '../headroom';
 import type { QuotaProviderType } from '../providers/types';
 import { HeadroomWindows } from './HeadroomWindows';
@@ -46,9 +46,7 @@ const HEADROOM_WINDOW_PROVIDERS = new Set<QuotaProviderType>([
   'meta',
 ]);
 
-export type QuotaCardHeadroom = Pick<CredentialHeadroom, 'seenAtMs' | 'seenFrom'> & {
-  summary: HeadroomSummary;
-};
+export type QuotaCardHeadroom = SummarizedHeadroom;
 
 const TIER_TAGS: Partial<Record<HeadroomSummary['tier'], { key: string; tone: 'bad' | 'warn' }>> = {
   'runs-out': { key: 'quota_management.tier_runs_out', tone: 'bad' },

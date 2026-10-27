@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { authFilesApi } from '@/services/api';
-import { useAuthStore, useConfigStore, useModelsStore } from '@/stores';
+import { useAuthStore, useConfigStore, useModelsStore, useQuotaStore } from '@/stores';
+import { classifyQuotaFiles } from '@/features/quota/logic';
 import { useApiKeysForModels } from '@/hooks/useApiKeysForModels';
 import { useProviderRecentRequests } from '@/components/providers/hooks/useProviderRecentRequests';
 import {
@@ -131,9 +132,14 @@ export function useDashboardOverview() {
 
   const loadAuthFiles = useCallback(async () => {
     if (!connected) return;
+    // A connection switch mid-request must not feed the old session's headers into the new one.
+    const generation = useQuotaStore.getState().cacheGeneration;
     try {
       const response = await authFilesApi.list();
       setAuthFiles(response.files);
+      if (generation === useQuotaStore.getState().cacheGeneration) {
+        useQuotaStore.getState().syncObservedQuota(response.files);
+      }
     } catch {
       setAuthFiles(null);
     }
@@ -282,10 +288,14 @@ export function useDashboardOverview() {
     [config, providerKeyCounts, authFiles, models.length, modelsLoading, modelsError]
   );
 
+  const quotaEntries = useMemo(() => classifyQuotaFiles(authFiles ?? []), [authFiles]);
+
   return {
     connectionStatus,
     connected,
     config,
+    authFiles,
+    quotaEntries,
     counts,
     providerKeyCounts,
     traffic,

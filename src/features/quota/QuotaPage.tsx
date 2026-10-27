@@ -24,7 +24,7 @@ import type { AuthFileItem, ResolvedTheme } from '@/types';
 import { getQuotaCacheKey } from '@/utils/quota/identity';
 import { ProviderTabs } from '@/features/authFiles/components/ProviderTabs';
 import { QuotaHeader } from './components/QuotaHeader';
-import { QuotaCard, type QuotaCardHeadroom } from './components/QuotaCard';
+import { QuotaCard } from './components/QuotaCard';
 import { QuotaTimeline } from './components/QuotaTimeline';
 import {
   CARD_ENTRANCE_BUDGET_MS,
@@ -37,8 +37,6 @@ import {
   type QuotaSortMode,
   type QuotaTabId,
 } from './constants';
-import { resolveCredentialHeadroom } from './freshness';
-import { summarizeHeadroom } from './headroom';
 import {
   buildTabCounts,
   canRefreshQuotaAfterList,
@@ -56,6 +54,7 @@ import type { QuotaProviderType } from './providers/types';
 import { useDevinQuotaAutoLoad } from './providers/devin/useDevinQuotaAutoLoad';
 import { useQuotaActions } from './hooks/useQuotaActions';
 import { useQuotaAutoRefresh } from './hooks/useQuotaAutoRefresh';
+import { useCredentialHeadroom } from './hooks/useCredentialHeadroom';
 import { useQuotaBatchLoader } from './hooks/useQuotaBatchLoader';
 import { readQuotaUiState, writeQuotaUiState } from './uiState';
 import styles from './QuotaPage.module.scss';
@@ -191,37 +190,7 @@ export function QuotaPage() {
    * Active fetches and passive traffic headers merged per credential, then
    * summarized: tightest limit, pace, run-out and availability. */
 
-  const observedQuota = useQuotaStore((state) => state.observedQuota);
-  const quotaCheckedAt = useQuotaStore((state) => state.quotaCheckedAt);
-  const headroomByKey = useMemo(() => {
-    const byKey = new Map<string, QuotaCardHeadroom>();
-    entries.forEach((entry) => {
-      const key = getQuotaCacheKey(entry.file);
-      const resolved = resolveCredentialHeadroom(
-        entry,
-        quotaByType[entry.type][key],
-        observedQuota[key],
-        quotaCheckedAt[key]
-      );
-      const summary = summarizeHeadroom({
-        windows: resolved.windows,
-        cooldown: entry.file.cooldownSnapshot,
-        now,
-      });
-      // Nothing read and nothing blocking: leave the credential unknown.
-      if (summary.tier === 'unknown') return;
-      byKey.set(`${entry.type}:${key}`, {
-        summary,
-        seenAtMs: resolved.seenAtMs,
-        seenFrom: resolved.seenFrom,
-      });
-    });
-    return byKey;
-  }, [entries, quotaByType, observedQuota, quotaCheckedAt, now]);
-  const headroomFor = useCallback(
-    (entry: QuotaFileEntry) => headroomByKey.get(`${entry.type}:${getQuotaCacheKey(entry.file)}`),
-    [headroomByKey]
-  );
+  const { headroomFor } = useCredentialHeadroom(entries, now);
   const headroomSummaryFor = useCallback(
     (entry: QuotaFileEntry) => headroomFor(entry)?.summary,
     [headroomFor]
