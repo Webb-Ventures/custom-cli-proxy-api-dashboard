@@ -10,15 +10,27 @@ import {
   CPA_BUILD_DATE_HEADER_KEYS,
   CPA_SUPPORT_PLUGIN_HEADER_KEYS,
   CPA_VERSION_HEADER_KEYS,
+  PLUGIN_MANAGEMENT_API_PREFIX,
   REQUEST_TIMEOUT_MS,
   VERSION_HEADER_KEYS,
 } from '@/utils/constants';
-import { computeApiUrl } from '@/utils/connection';
+import { computeApiUrl, normalizeApiBase } from '@/utils/connection';
 import { parseApiErrorResponse } from './apiError';
+
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    /**
+     * Send to a plugin-declared route, which CPA serves under the v0 management
+     * prefix, keeping this client's auth, errors and events.
+     */
+    pluginRoute?: boolean;
+  }
+}
 
 class ApiClient {
   private instance: AxiosInstance;
   private apiBase: string = '';
+  private pluginApiBase: string = '';
   private managementKey: string = '';
   private connectionRevision = 0;
 
@@ -42,6 +54,8 @@ class ApiClient {
       this.connectionRevision += 1;
     }
     this.apiBase = apiBase;
+    const root = normalizeApiBase(config.apiBase);
+    this.pluginApiBase = root ? `${root}${PLUGIN_MANAGEMENT_API_PREFIX}` : '';
     this.managementKey = config.managementKey;
 
     if (config.timeout) {
@@ -61,6 +75,7 @@ class ApiClient {
     const revision = this.connectionRevision;
     const client = new ApiClient(() => this.connectionRevision === revision);
     client.apiBase = this.apiBase;
+    client.pluginApiBase = this.pluginApiBase;
     client.managementKey = this.managementKey;
     return client;
   }
@@ -124,7 +139,7 @@ class ApiClient {
     this.instance.interceptors.request.use(
       (config) => {
         // Set baseURL
-        config.baseURL = this.apiBase;
+        config.baseURL = config.pluginRoute ? this.pluginApiBase : this.apiBase;
 
         // Add authorization header
         if (this.managementKey) {
