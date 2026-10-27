@@ -151,7 +151,7 @@ button.quotaMessageAction {
   height: 6px;
   border-radius: $radius-full;
   background: color-mix(in srgb, var(--text-primary) 8%, transparent);
-  overflow: hidden;
+  position: relative;
 }
 
 .quotaBarFill {
@@ -170,6 +170,30 @@ button.quotaMessageAction {
 
 .quotaBarFillLow {
   background: var(--viz-failure);
+}
+
+/* Usage mode: the marker shows how much of the window has elapsed; the hatch shows
+ * how much more the window is projected to use by its reset at the current rate. */
+.quotaBarPace {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--text-primary);
+}
+
+.quotaBarProjection {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 0 $radius-full $radius-full 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--meter-tone, var(--viz-failure)) 55%, transparent) 0 3px,
+    transparent 3px 6px
+  );
 }
 
 /* ---------- 计划徽章（codexPlan*：antigravity/claude/xai 复用） ---------- */

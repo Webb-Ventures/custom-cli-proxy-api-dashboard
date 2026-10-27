@@ -344,6 +344,28 @@ export function windowPace(window: HeadroomWindow, now: number): HeadroomPace | 
 }
 
 /**
+ * Percent used the window reaches by its reset at its average rate so far; may
+ * exceed 100. Null under the same early-window rule as the run-out estimate.
+ */
+export function windowProjectedUsedPercent(window: HeadroomWindow, now: number): number | null {
+  const elapsedPercent = windowElapsedPercent(window, now);
+  if (elapsedPercent === null || elapsedPercent < RUNS_OUT_MIN_ELAPSED_PERCENT) return null;
+  return (window.usedPercent / elapsedPercent) * 100;
+}
+
+/** The usage-mode reading a QuotaMeter draws for one window. */
+export function windowMeterUsage(
+  window: HeadroomWindow,
+  now: number
+): { usedPercent: number; elapsedPercent: number | null; projectedPercent: number | null } {
+  return {
+    usedPercent: window.usedPercent,
+    elapsedPercent: windowElapsedPercent(window, now),
+    projectedPercent: isWindowExhausted(window) ? null : windowProjectedUsedPercent(window, now),
+  };
+}
+
+/**
  * When the window runs out at its average rate so far, if that is before it resets.
  *
  * Null until RUNS_OUT_MIN_ELAPSED_PERCENT of the window has elapsed, when nothing

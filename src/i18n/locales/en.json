@@ -1624,7 +1624,10 @@
     "weekday_wed": "Wed",
     "weekday_thu": "Thu",
     "weekday_fri": "Fri",
-    "weekday_sat": "Sat"
+    "weekday_sat": "Sat",
+    "meter_used": "{{used}}% used",
+    "meter_used_with_pace": "{{used}}% used, {{elapsed}}% of window elapsed",
+    "meter_used_with_pace_runs_out": "{{used}}% used, {{elapsed}}% of window elapsed, on pace to run out before reset"
   },
   "plugin_management": {
     "title": "Plugin Management",

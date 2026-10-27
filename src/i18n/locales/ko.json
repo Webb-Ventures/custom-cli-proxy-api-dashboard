@@ -1624,7 +1624,10 @@
     "weekday_wed": "수",
     "weekday_thu": "목",
     "weekday_fri": "금",
-    "weekday_sat": "토"
+    "weekday_sat": "토",
+    "meter_used": "{{used}}% 사용",
+    "meter_used_with_pace": "{{used}}% 사용, 기간 {{elapsed}}% 경과",
+    "meter_used_with_pace_runs_out": "{{used}}% 사용, 기간 {{elapsed}}% 경과, 현재 속도라면 초기화 전에 소진됩니다"
   },
   "plugin_management": {
     "title": "플러그인 관리",

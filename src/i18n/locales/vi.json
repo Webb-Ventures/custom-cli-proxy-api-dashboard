@@ -1580,7 +1580,10 @@
     "search_placeholder": "Tìm theo tên file hoặc email",
     "search_empty_title": "Không có tài khoản phù hợp",
     "search_empty_desc": "Hãy thử tên file hoặc email khác, hoặc xóa tìm kiếm.",
-    "search_clear": "Xóa tìm kiếm"
+    "search_clear": "Xóa tìm kiếm",
+    "meter_used": "Đã dùng {{used}}%",
+    "meter_used_with_pace": "Đã dùng {{used}}%, đã qua {{elapsed}}% thời gian cửa sổ",
+    "meter_used_with_pace_runs_out": "Đã dùng {{used}}%, đã qua {{elapsed}}% thời gian cửa sổ, với tốc độ hiện tại sẽ hết trước khi đặt lại"
   },
   "plugin_management": {
     "title": "Quản lý Plugin",

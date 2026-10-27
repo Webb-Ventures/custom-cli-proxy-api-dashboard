@@ -48,6 +48,9 @@ export interface QuotaClassMap {
   quotaBarFillHigh: string;
   quotaBarFillMedium: string;
   quotaBarFillLow: string;
+  /** Elapsed-time marker and projected-use hatch, drawn only in usage mode. */
+  quotaBarPace: string;
+  quotaBarProjection: string;
 }
 
 export const QUOTA_CLASS_KEYS: readonly (keyof QuotaClassMap)[] = [
@@ -83,6 +86,8 @@ export const QUOTA_CLASS_KEYS: readonly (keyof QuotaClassMap)[] = [
   'quotaBarFillHigh',
   'quotaBarFillMedium',
   'quotaBarFillLow',
+  'quotaBarPace',
+  'quotaBarProjection',
 ];
 
 /** 宿主 CSS Module → 类型化契约。缺键即抛（fail-loud），`source` 用于报错定位。 */

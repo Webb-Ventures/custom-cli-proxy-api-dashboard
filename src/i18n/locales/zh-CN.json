@@ -1623,7 +1623,10 @@
     "weekday_wed": "三",
     "weekday_thu": "四",
     "weekday_fri": "五",
-    "weekday_sat": "六"
+    "weekday_sat": "六",
+    "meter_used": "已用 {{used}}%",
+    "meter_used_with_pace": "已用 {{used}}%，窗口已过 {{elapsed}}%",
+    "meter_used_with_pace_runs_out": "已用 {{used}}%，窗口已过 {{elapsed}}%，按当前速度将在重置前用完"
   },
   "plugin_management": {
     "title": "插件管理",

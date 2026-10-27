@@ -1651,7 +1651,10 @@
     "weekday_wed": "三",
     "weekday_thu": "四",
     "weekday_fri": "五",
-    "weekday_sat": "六"
+    "weekday_sat": "六",
+    "meter_used": "已用 {{used}}%",
+    "meter_used_with_pace": "已用 {{used}}%，視窗已過 {{elapsed}}%",
+    "meter_used_with_pace_runs_out": "已用 {{used}}%，視窗已過 {{elapsed}}%，按目前速度將在重置前用完"
   },
   "plugin_management": {
     "title": "插件管理",

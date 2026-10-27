@@ -1627,7 +1627,10 @@
     "weekday_wed": "Ср",
     "weekday_thu": "Чт",
     "weekday_fri": "Пт",
-    "weekday_sat": "Сб"
+    "weekday_sat": "Сб",
+    "meter_used": "Использовано {{used}}%",
+    "meter_used_with_pace": "Использовано {{used}}%, прошло {{elapsed}}% окна",
+    "meter_used_with_pace_runs_out": "Использовано {{used}}%, прошло {{elapsed}}% окна, при текущем темпе лимит закончится до сброса"
   },
   "plugin_management": {
     "title": "Управление плагинами",
