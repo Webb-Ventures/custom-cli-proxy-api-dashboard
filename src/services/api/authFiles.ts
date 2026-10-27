@@ -16,6 +16,7 @@ import {
 } from '@/utils/recentRequests';
 import { parseTimestampMs } from '@/utils/timestamp';
 import { normalizeAuthFileCooldowns, normalizeCooldownTimestamp } from './authFileCooldowns';
+import { normalizeAuthFileQuotaObservation } from './quotaSignals';
 
 type AuthFileStatusResponse = { status: string; disabled: boolean };
 export type AuthFileLookup = { name: string; authIndex?: string };
@@ -285,6 +286,12 @@ const normalizeAuthFileEntry = (
     readTextField(entry, 'quota_provider') || readTextField(entry, 'quotaProvider');
   const quotaPluginId =
     readTextField(entry, 'quota_plugin_id') || readTextField(entry, 'quotaPluginId');
+  const quotaObservation = normalizeAuthFileQuotaObservation(
+    readTextField(entry, 'provider') || entry.type,
+    entry.quota,
+    entry.model_quotas,
+    receivedAtMs
+  );
 
   return {
     ...entry,
@@ -293,6 +300,7 @@ const normalizeAuthFileEntry = (
     siwcBound: entry.siwc_bound === true,
     siwcExpiresAt: readTextField(entry, 'siwc_expires_at') || undefined,
     cooldownSnapshot: normalizeAuthFileCooldowns(entry.cooldowns, observedAt, receivedAtMs),
+    ...(quotaObservation ? { quotaObservation } : {}),
     runtimeOnly: readRuntimeOnlyField(entry),
     authIndex: normalizeRecentRequestAuthIndex(entry['auth_index'] ?? entry.authIndex),
     ...(supportsQuota !== undefined ? { supportsQuota } : {}),

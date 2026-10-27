@@ -39,6 +39,62 @@ export interface AuthFileCooldownSnapshot {
   records: AuthFileCooldown[] | null;
 }
 
+export type ObservedQuotaProvider = 'claude' | 'codex';
+
+/** One rate-limit window read from passively captured upstream response headers. */
+export interface ObservedQuotaWindow {
+  /**
+   * Stable within a provider. Claude: `5h`, `7d`, `7d_oi`. Codex: `<limit>:primary` or
+   * `<limit>:secondary`, where `<limit>` is empty for the main limit, `code-review`,
+   * `additional-<name>` or an upstream short name.
+   */
+  id: string;
+  /** Codex limit namespace; empty for the main limit. Absent for Claude. */
+  limit?: string;
+  /** Upstream display name for a named Codex limit, when sent. */
+  limitName?: string;
+  /** 0–100. */
+  usedPercent: number;
+  periodHours?: number;
+  resetAtMs?: number;
+  /** Claude per-window status such as `allowed`, `allowed_warning` or `rejected`. */
+  status?: string;
+}
+
+export interface ObservedQuotaCredits {
+  balance?: number;
+  hasCredits?: boolean;
+  unlimited?: boolean;
+}
+
+export interface ObservedQuota {
+  provider: ObservedQuotaProvider;
+  windows: ObservedQuotaWindow[];
+  /** Claude unified status. */
+  status?: string;
+  /** Codex `limit-reached`; Claude derives it from a `rejected` status. */
+  limitReached?: boolean;
+  retryAfterSeconds?: number;
+  /** Codex plan type as sent in `x-codex-plan-type`. */
+  planType?: string;
+  /** Codex active limit namespace. */
+  activeLimit?: string;
+  credits?: ObservedQuotaCredits;
+}
+
+/**
+ * Rate-limit headers the backend captured from the latest proxied response (`quota.signals`).
+ * Only Claude and Codex send parseable windows; refreshed by traffic, never by polling.
+ */
+export interface AuthFileQuotaObservation extends ObservedQuota {
+  /** Server time the headers were captured. */
+  observedAt?: string;
+  /** Local receipt time of the credentials list. */
+  receivedAtMs: number;
+  /** Per-model snapshots from `model_quotas`, keyed by model. */
+  models?: Record<string, ObservedQuota & { observedAt?: string }>;
+}
+
 export interface AuthFileItem {
   name: string;
   siwcBindSupported?: boolean;
@@ -81,6 +137,8 @@ export interface AuthFileItem {
   recentRequests?: RecentRequestBucket[];
   /** Absent on older servers. Never interpreted as credential health. */
   cooldownSnapshot?: AuthFileCooldownSnapshot;
+  /** Absent when the provider sends no passive quota headers or none were captured yet. */
+  quotaObservation?: AuthFileQuotaObservation;
   [key: string]: unknown;
 }
 
