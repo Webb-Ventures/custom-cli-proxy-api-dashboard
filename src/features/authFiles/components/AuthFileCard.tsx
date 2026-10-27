@@ -32,7 +32,13 @@ import {
 import { deriveAuthFileIdentity } from '@/features/authFiles/identity';
 import { resolveAuthFileQuotaType } from '@/features/authFiles/logic';
 import type { AuthFileStatusBarData } from '@/features/authFiles/hooks/useAuthFilesStatusBarCache';
-import { AuthFileQuotaSection } from '@/features/authFiles/components/AuthFileQuotaSection';
+import {
+  AuthFileHeadroomStrip,
+  AuthFileQuotaSection,
+} from '@/features/authFiles/components/AuthFileQuotaSection';
+import { useNow } from '@/hooks/useNow';
+import { resolveQuotaProviderType } from '@/features/quota/logic';
+import { useFileHeadroom } from '@/features/quota/hooks/useFileHeadroom';
 import { AuthFileCooldownSection } from './AuthFileCooldownSection';
 import { getSiwcBindingStatus, supportsSiwcBinding } from '@/features/oauth/siwcBinding';
 import { SiwcStatusBadge } from '@/features/oauth/components/SiwcStatusBadge';
@@ -98,6 +104,10 @@ export function AuthFileCard(props: AuthFileCardProps) {
 
   const quotaType = resolveAuthFileQuotaType(file, quotaFilterType);
   const showQuotaLayout = Boolean(quotaType) && !isRuntimeOnly && !compact;
+  // Headroom does not wait for a quota view: traffic headers already carry it.
+  const headroomType = isRuntimeOnly ? null : (quotaType ?? resolveQuotaProviderType(file));
+  const now = useNow(headroomType !== null);
+  const headroom = useFileHeadroom(file, headroomType, now);
 
   const successCount = file.successCount ?? 0;
   const failureCount = file.failureCount ?? 0;
@@ -189,6 +199,8 @@ export function AuthFileCard(props: AuthFileCardProps) {
         </div>
       )}
 
+      {headroom && !showQuotaLayout && <AuthFileHeadroomStrip headroom={headroom} now={now} />}
+
       <AuthFileCooldownSection
         snapshot={file.cooldownSnapshot}
         resetting={isCooldownResetting}
@@ -263,7 +275,13 @@ export function AuthFileCard(props: AuthFileCardProps) {
       )}
 
       {showQuotaLayout && quotaType && (
-        <AuthFileQuotaSection file={file} quotaType={quotaType} disableControls={disableControls} />
+        <AuthFileQuotaSection
+          file={file}
+          quotaType={quotaType}
+          disableControls={disableControls}
+          headroom={headroom}
+          now={now}
+        />
       )}
 
       <footer className={styles.actions}>

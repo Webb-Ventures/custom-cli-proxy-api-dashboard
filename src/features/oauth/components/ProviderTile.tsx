@@ -16,6 +16,8 @@ export interface ProviderTileProps {
   index: number;
   status?: ProviderFlowState['status'];
   statusLabel?: string;
+  /** Signed-in accounts and their tightest limit; `tone` flags a constrained one. */
+  accounts?: { text: string; tone?: 'bad' | 'warn' };
   onOpen: () => void;
 }
 
@@ -31,6 +33,7 @@ export function ProviderTile({
   index,
   status,
   statusLabel,
+  accounts,
   onOpen,
 }: ProviderTileProps) {
   const captionId = useId();
@@ -68,6 +71,13 @@ export function ProviderTile({
             <span className={styles.captionText}>{caption}</span>
           )}
         </span>
+        {accounts && (
+          <span
+            className={`${styles.accounts} ${accounts.tone ? styles[`accounts_${accounts.tone}`] : ''}`}
+          >
+            {accounts.text}
+          </span>
+        )}
       </span>
       <span className={styles.trail} aria-hidden="true">
         <IconPlus size={15} />

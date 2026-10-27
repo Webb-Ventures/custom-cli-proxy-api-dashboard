@@ -1022,7 +1022,12 @@
     "sign_up_prompt": "還沒有帳號？",
     "copied": "已複製",
     "login_another_account": "登入另一個帳號",
-    "view_auth_files": "查看驗證檔案"
+    "view_auth_files": "查看驗證檔案",
+    "tile_accounts": "已連接 {{count}} 個",
+    "tile_accounts_limit": "已連接 {{count}} 個，{{window}}已用 {{used}}%",
+    "tile_accounts_blocked": "已連接 {{count}} 個，{{window}}已用完",
+    "tile_accounts_cooling": "已連接 {{count}} 個，冷卻中",
+    "tile_accounts_unavailable": "已連接 {{count}} 個，{{blocked}} 個不可用"
   },
   "stats": {
     "success": "成功",

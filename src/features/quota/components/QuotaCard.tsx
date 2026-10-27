@@ -22,9 +22,9 @@ import {
   isThemeSurfaceIconProvider,
 } from '@/features/authFiles/constants';
 import { bindQuotaClasses } from '../types';
+import { HEADROOM_WINDOW_PROVIDERS } from '../constants';
 import type { SummarizedHeadroom } from '../freshness';
 import type { HeadroomSummary } from '../headroom';
-import type { QuotaProviderType } from '../providers/types';
 import { HeadroomWindows } from './HeadroomWindows';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
@@ -36,15 +36,6 @@ import styles from './QuotaCard.module.scss';
 
 /** Bind the quota-page styles to the shared rendering contract. */
 const quotaClasses = bindQuotaClasses(bodyStyles, 'QuotaBody.module.scss');
-
-/** Providers whose windows are a flat list the headroom block can replace. */
-const HEADROOM_WINDOW_PROVIDERS = new Set<QuotaProviderType>([
-  'claude',
-  'codex',
-  'devin',
-  'kimi',
-  'meta',
-]);
 
 export type QuotaCardHeadroom = SummarizedHeadroom;
 

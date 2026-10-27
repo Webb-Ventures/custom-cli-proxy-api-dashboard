@@ -26,6 +26,15 @@ export type QuotaSortMode = (typeof QUOTA_SORT_MODES)[number];
 
 export const DEFAULT_QUOTA_SORT_MODE: QuotaSortMode = 'pressure';
 
+/** Providers whose windows are a flat list the tightest-first headroom block can replace. */
+export const HEADROOM_WINDOW_PROVIDERS: ReadonlySet<QuotaProviderType> = new Set([
+  'claude',
+  'codex',
+  'devin',
+  'kimi',
+  'meta',
+]);
+
 /** Headroom state filter: all, ahead of pace (incl. projected run-out), cooling down, used up. */
 export const QUOTA_HEADROOM_FILTERS = ['all', 'ahead', 'cooling', 'exhausted'] as const;
 

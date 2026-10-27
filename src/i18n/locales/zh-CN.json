@@ -994,7 +994,12 @@
     "restart_login": "重新开始",
     "success_saved_hint": "凭证已保存，可在认证文件页管理。",
     "sign_up_prompt": "还没有账号？",
-    "copied": "已复制"
+    "copied": "已复制",
+    "tile_accounts": "已连接 {{count}} 个",
+    "tile_accounts_limit": "已连接 {{count}} 个，{{window}}已用 {{used}}%",
+    "tile_accounts_blocked": "已连接 {{count}} 个，{{window}}已用完",
+    "tile_accounts_cooling": "已连接 {{count}} 个，冷却中",
+    "tile_accounts_unavailable": "已连接 {{count}} 个，{{blocked}} 个不可用"
   },
   "stats": {
     "success": "成功",

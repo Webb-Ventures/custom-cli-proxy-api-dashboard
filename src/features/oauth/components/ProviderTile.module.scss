@@ -212,3 +212,20 @@
     animation: none;
   }
 }
+
+/* Signed-in accounts: plain text, tinted only when one is constrained. */
+.accounts {
+  @include text-ellipsis;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.accounts_warn {
+  color: var(--text-primary);
+}
+
+.accounts_bad {
+  color: var(--viz-failure);
+}

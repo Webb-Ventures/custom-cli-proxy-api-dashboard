@@ -995,7 +995,12 @@
     "restart_login": "다시 시작",
     "success_saved_hint": "자격 증명이 저장되었습니다. 인증 파일에서 관리할 수 있습니다.",
     "sign_up_prompt": "계정이 없나요?",
-    "copied": "복사됨"
+    "copied": "복사됨",
+    "tile_accounts": "{{count}}개 연결됨",
+    "tile_accounts_limit": "{{count}}개 연결됨, {{window}} {{used}}% 사용",
+    "tile_accounts_blocked": "{{count}}개 연결됨, {{window}} 소진됨",
+    "tile_accounts_cooling": "{{count}}개 연결됨, 대기 중",
+    "tile_accounts_unavailable": "{{count}}개 연결됨, {{blocked}}개 사용 불가"
   },
   "stats": {
     "success": "성공",

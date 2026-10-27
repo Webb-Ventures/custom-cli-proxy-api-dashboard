@@ -7,7 +7,7 @@ import iconVertex from '@/assets/icons/vertex.svg';
 import iconCodex from '@/assets/icons/codex.svg';
 import { KIMI_DISPLAY_NAME } from '@/features/providers/kimi';
 import { OAuthHeader } from './components/OAuthHeader';
-import { ProviderTile } from './components/ProviderTile';
+import { ProviderTile, type ProviderTileProps } from './components/ProviderTile';
 import { SponsorCard, type SponsorCardSite } from './components/SponsorCard';
 import { OAuthFlowDialog, type DialogHeading } from './components/OAuthFlowDialog';
 import { VertexImportDialog } from './components/VertexImportDialog';
@@ -18,6 +18,8 @@ import {
   type ProviderFlowState,
 } from './hooks/useOAuthFlows';
 import { useVertexImport } from './hooks/useVertexImport';
+import { useProviderAccounts } from './hooks/useProviderAccounts';
+import { OAUTH_QUOTA_TYPES, providerAccountsLine } from './providerAccounts';
 import {
   isSponsor,
   OAUTH_PROVIDERS,
@@ -72,6 +74,16 @@ export function OAuthPage() {
     isFocused: () => focusedRef.current === VERTEX_DIALOG_ID,
     onCredentialAdded: flows.recordCredentialAdded,
   });
+
+  const accountsByType = useProviderAccounts(flows.addedCount);
+
+  const accountsOf = (card: OAuthProviderCard): ProviderTileProps['accounts'] => {
+    const type = card.kind === 'builtin' ? OAUTH_QUOTA_TYPES[card.id] : undefined;
+    const line = providerAccountsLine(type ? accountsByType.get(type) : undefined, (window) =>
+      window.labelKey ? t(window.labelKey, window.labelParams ?? {}) : window.label || window.id
+    );
+    return line ? { text: t(line.key, line.params), tone: line.tone } : undefined;
+  };
 
   const labelOf = (card: OAuthProviderCard) =>
     card.kind === 'plugin'
@@ -169,6 +181,7 @@ export function OAuthPage() {
         index={index + tileIndexOffset}
         status={status}
         statusLabel={tileStatusLabel(status)}
+        accounts={accountsOf(card)}
         onOpen={() => openProvider(card)}
       />
     );

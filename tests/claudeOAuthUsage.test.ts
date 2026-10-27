@@ -405,8 +405,11 @@ describe('Claude usage snapshot rendering and retention', () => {
       new URL('../src/features/authFiles/components/AuthFileQuotaSection.tsx', import.meta.url),
       'utf8'
     );
-    // Idle quota is refreshed via the clickable idle prompt; avoid a duplicate button.
-    expect(source).toContain("const showRefreshQuotaAction = quotaStatus !== 'idle';");
+    // Idle quota is refreshed via the clickable idle prompt; avoid a duplicate button,
+    // unless traffic readings replaced that prompt.
+    expect(source).toContain(
+      "const showRefreshQuotaAction = quotaStatus !== 'idle' || showHeadroom;"
+    );
     expect(source).toContain('{showRefreshQuotaAction && (');
     expect(source).toContain('<div className={styles.quotaCardActions}>');
     expect(source).toContain('onClick={() => void refreshQuotaForFile()}');

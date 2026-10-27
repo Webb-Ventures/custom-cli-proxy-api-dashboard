@@ -13,6 +13,9 @@ import { isRuntimeOnlyAuthFile, type QuotaProviderType } from '@/features/authFi
 import { Button } from '@/components/ui/Button';
 import { IconRefreshCw } from '@/components/ui/icons';
 import { bindQuotaClasses } from '@/features/quota/types';
+import { HEADROOM_WINDOW_PROVIDERS } from '@/features/quota/constants';
+import { HeadroomWindows } from '@/features/quota/components/HeadroomWindows';
+import type { SummarizedHeadroom } from '@/features/quota/freshness';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '@/features/quota/providers';
 import { hasClaudeUsageData } from '@/features/quota/providers/claude/data';
 import styles from './AuthFileQuota.module.scss';
@@ -32,10 +35,36 @@ export type AuthFileQuotaSectionProps = {
   file: AuthFileItem;
   quotaType: QuotaProviderType;
   disableControls: boolean;
+  /** Merged active and traffic readings; shown tightest limit first when present. */
+  headroom?: SummarizedHeadroom | null;
+  now: number;
 };
 
+/**
+ * The tightest limit alone, for cards without the quota layout (compact cards,
+ * or no quota view selected). Traffic headers make it free to show.
+ */
+export function AuthFileHeadroomStrip({
+  headroom,
+  now,
+}: {
+  headroom: SummarizedHeadroom;
+  now: number;
+}) {
+  return (
+    <div className={styles.headroomStrip}>
+      <HeadroomWindows
+        summary={headroom.summary}
+        classes={compactQuotaClasses}
+        now={now}
+        tightestOnly
+      />
+    </div>
+  );
+}
+
 export function AuthFileQuotaSection(props: AuthFileQuotaSectionProps) {
-  const { file, quotaType, disableControls } = props;
+  const { file, quotaType, disableControls, headroom, now } = props;
   const { t } = useTranslation();
   const showNotification = useNotificationStore((state) => state.showNotification);
   const showConfirmation = useNotificationStore((state) => state.showConfirmation);
@@ -163,9 +192,10 @@ export function AuthFileQuotaSection(props: AuthFileQuotaSectionProps) {
   const quotaStatus = quota?.status ?? 'idle';
   const canRefreshQuota = !disableControls && !file.disabled && !resettingQuota;
   const canUseResetQuota = canRefreshQuota && quotaStatus !== 'loading';
-  // Idle state already renders a clickable "click to refresh" prompt; only offer the
-  // explicit refresh button once quota has been requested so it can be refreshed again.
-  const showRefreshQuotaAction = quotaStatus !== 'idle';
+  const showHeadroom = HEADROOM_WINDOW_PROVIDERS.has(quotaType) && Boolean(headroom);
+  // Idle state renders a clickable "click to refresh" prompt, so the explicit button waits
+  // until quota has been requested, unless traffic readings replaced that prompt.
+  const showRefreshQuotaAction = quotaStatus !== 'idle' || showHeadroom;
   const showResetQuotaAction = quota !== undefined && Boolean(adapter.canResetQuota?.(quota));
   const resetQuotaAction =
     adapter.resetQuota && showResetQuotaAction ? (
@@ -190,9 +220,28 @@ export function AuthFileQuotaSection(props: AuthFileQuotaSectionProps) {
     quota?.error || t('common.unknown_error')
   );
 
+  const hasBodyData = quotaStatus === 'success' || retainedClaudeUsage;
+
   return (
     <div className={styles.quotaSection}>
-      {quotaStatus === 'loading' ? (
+      {showHeadroom && headroom ? (
+        <>
+          <HeadroomWindows summary={headroom.summary} classes={compactQuotaClasses} now={now} />
+          {hasBodyData && quota && (
+            <adapter.Body quota={quota} classes={compactQuotaClasses} showWindows={false} />
+          )}
+          {quotaStatus === 'loading' && (
+            <div role="status" aria-busy="true" className={styles.quotaMessage}>
+              {t('quota_management.refreshing')}
+            </div>
+          )}
+          {quotaStatus === 'error' && (
+            <div className={styles.quotaError}>
+              {t(`${adapter.i18nPrefix}.load_failed`, { message: quotaErrorMessage })}
+            </div>
+          )}
+        </>
+      ) : quotaStatus === 'loading' ? (
         <div className={styles.quotaMessage}>{t(`${adapter.i18nPrefix}.loading`)}</div>
       ) : quotaStatus === 'idle' ? (
         <button
@@ -214,7 +263,9 @@ export function AuthFileQuotaSection(props: AuthFileQuotaSectionProps) {
       ) : !retainedClaudeUsage ? (
         <div className={styles.quotaMessage}>{t(`${adapter.i18nPrefix}.idle`)}</div>
       ) : null}
-      {retainedClaudeUsage && quota && <adapter.Body quota={quota} classes={compactQuotaClasses} />}
+      {!showHeadroom && retainedClaudeUsage && quota && (
+        <adapter.Body quota={quota} classes={compactQuotaClasses} />
+      )}
       {(showRefreshQuotaAction || resetQuotaAction) && (
         <div className={styles.quotaCardActions}>
           {resetQuotaAction}

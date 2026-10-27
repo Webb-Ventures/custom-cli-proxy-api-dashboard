@@ -995,7 +995,12 @@
     "restart_login": "Start over",
     "success_saved_hint": "The credential is saved — manage it in Auth Files.",
     "sign_up_prompt": "No account yet?",
-    "copied": "Copied"
+    "copied": "Copied",
+    "tile_accounts": "{{count}} connected",
+    "tile_accounts_limit": "{{count}} connected, {{window}} {{used}}% used",
+    "tile_accounts_blocked": "{{count}} connected, {{window}} used up",
+    "tile_accounts_cooling": "{{count}} connected, cooling down",
+    "tile_accounts_unavailable": "{{count}} connected, {{blocked}} unavailable"
   },
   "stats": {
     "success": "Success",

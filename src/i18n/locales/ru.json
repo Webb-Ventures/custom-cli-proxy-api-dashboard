@@ -998,7 +998,12 @@
     "restart_login": "Начать заново",
     "success_saved_hint": "Учётные данные сохранены — управляйте ими в файлах аутентификации.",
     "sign_up_prompt": "Нет аккаунта?",
-    "copied": "Скопировано"
+    "copied": "Скопировано",
+    "tile_accounts": "Подключено: {{count}}",
+    "tile_accounts_limit": "Подключено: {{count}}, {{window}}: использовано {{used}}%",
+    "tile_accounts_blocked": "Подключено: {{count}}, {{window}}: исчерпано",
+    "tile_accounts_cooling": "Подключено: {{count}}, на паузе",
+    "tile_accounts_unavailable": "Подключено: {{count}}, недоступно: {{blocked}}"
   },
   "stats": {
     "success": "Успех",
