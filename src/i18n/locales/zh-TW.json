@@ -2536,6 +2536,17 @@
     "blocks_more": "另有 {{count}} 個更早的區塊未顯示。",
     "provider_accounts": "{{count}} 個帳號",
     "accounts_idle": "另有 {{count}} 個憑證在此範圍內未處理請求。",
-    "groups_show_all": "顯示全部 {{count}} 項"
+    "groups_show_all": "顯示全部 {{count}} 項",
+    "capacity_used": "限額已用",
+    "capacity_left": "剩餘 Token（估算）",
+    "capacity_per_percent": "此限額每 1% 約 {{tokens}} Token",
+    "capacity_too_early": "此限額用到 {{percent}}% 後開始估算",
+    "capacity_pending": "尚早",
+    "pool_title": "估算容量已用，{{window}}",
+    "pool_left": "{{percent}}%，約剩 {{tokens}} Token（{{value}}）",
+    "pool_label": "{{provider}} 資源池：{{accounts}}",
+    "pool_segment": "{{name}}：約 {{capacity}} 中已用 {{percent}}%",
+    "capacity_note": "估算方式：限額重置以來的 Token 除以已用百分比。代理之外的使用會讓容量看起來偏小。",
+    "pool_unestimated": "{{count}} 個帳號未計入：沒有此限額的讀數，或用量不足 5%。"
   }
 }

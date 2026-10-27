@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { providerLabel } from '@/features/dashboard/utils';
+import { CAPACITY_MIN_USED_PERCENT, type AccountCapacity } from '../capacity';
 import type { AccountRow } from '../usageModel';
 import { formatMoney, formatMultiple, formatTokens } from '../format';
 import { rowLabel } from '../labels';
@@ -10,6 +11,8 @@ export interface AccountsTableProps {
   /** Show the provider column (the Accounts view); a provider panel leaves it out. */
   showProvider: boolean;
   label: string;
+  /** Estimated capacity by `auth_index`; adds limit and tokens-left columns. */
+  capacity?: ReadonlyMap<string, AccountCapacity>;
   onSelectCredential: (authIndex: string) => void;
 }
 
@@ -17,6 +20,7 @@ export function AccountsTable({
   accounts,
   showProvider,
   label,
+  capacity,
   onSelectCredential,
 }: AccountsTableProps) {
   const { t, i18n } = useTranslation();
@@ -30,6 +34,16 @@ export function AccountsTable({
             <th scope="col">{t('usage.group_credential')}</th>
             {showProvider && <th scope="col">{t('usage.group_provider')}</th>}
             <th scope="col">{t('usage.plan_monthly')}</th>
+            {capacity && (
+              <>
+                <th scope="col" className={styles.num}>
+                  {t('usage.capacity_used')}
+                </th>
+                <th scope="col" className={styles.num}>
+                  {t('usage.capacity_left')}
+                </th>
+              </>
+            )}
             <th scope="col" className={styles.num}>
               {t('usage.requests')}
             </th>
@@ -87,6 +101,7 @@ export function AccountsTable({
                     <span className={styles.muted}>{t('usage.plan_unknown')}</span>
                   )}
                 </td>
+                {capacity && <CapacityCells estimate={capacity.get(row.id)} />}
                 <td className={styles.num}>{row.requests.toLocaleString(locale)}</td>
                 <td className={styles.num}>{formatTokens(row.tokens.total)}</td>
                 <td className={styles.num}>{formatMoney(row.value.usd, locale)}</td>
@@ -97,5 +112,49 @@ export function AccountsTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+function CapacityCells({ estimate }: { estimate: AccountCapacity | undefined }) {
+  const { t, i18n } = useTranslation();
+  if (!estimate) {
+    return (
+      <>
+        <td className={`${styles.num} ${styles.muted}`}>—</td>
+        <td className={`${styles.num} ${styles.muted}`}>—</td>
+      </>
+    );
+  }
+  const window = estimate.window;
+  const windowName = window.labelKey
+    ? t(window.labelKey, window.labelParams ?? {})
+    : window.label || window.id;
+  return (
+    <>
+      <td className={styles.num} title={windowName}>
+        {Math.round(estimate.usedPercent)}%<span className={styles.rowMeta}>{windowName}</span>
+      </td>
+      <td
+        className={styles.num}
+        title={
+          estimate.tokensPerPercent !== null
+            ? t('usage.capacity_per_percent', { tokens: formatTokens(estimate.tokensPerPercent) })
+            : t('usage.capacity_too_early', { percent: CAPACITY_MIN_USED_PERCENT })
+        }
+      >
+        {estimate.tokensLeft !== null ? (
+          <>
+            ~{formatTokens(estimate.tokensLeft)}
+            {estimate.valueLeftUsd !== null && estimate.valueLeftUsd > 0 && (
+              <span className={styles.rowMeta}>
+                {formatMoney(estimate.valueLeftUsd, i18n.language, { whole: true })}
+              </span>
+            )}
+          </>
+        ) : (
+          <span className={styles.muted}>{t('usage.capacity_pending')}</span>
+        )}
+      </td>
+    </>
   );
 }

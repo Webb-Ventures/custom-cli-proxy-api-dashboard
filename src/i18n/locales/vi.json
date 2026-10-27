@@ -2528,6 +2528,18 @@
     "accounts_idle_one": "Còn {{count}} thông tin xác thực không xử lý yêu cầu nào trong khoảng này.",
     "accounts_idle_other": "Còn {{count}} thông tin xác thực không xử lý yêu cầu nào trong khoảng này.",
     "groups_show_all_one": "Hiện tất cả {{count}}",
-    "groups_show_all_other": "Hiện tất cả {{count}}"
+    "groups_show_all_other": "Hiện tất cả {{count}}",
+    "capacity_used": "Đã dùng giới hạn",
+    "capacity_left": "Token còn lại, ước tính",
+    "capacity_per_percent": "Khoảng {{tokens}} token cho mỗi 1% giới hạn này",
+    "capacity_too_early": "Ước tính khi giới hạn này đã dùng {{percent}}%",
+    "capacity_pending": "Còn sớm",
+    "pool_title": "Dung lượng ước tính đã dùng, {{window}}",
+    "pool_left": "{{percent}}%, còn khoảng {{tokens}} token ({{value}})",
+    "pool_label": "Nhóm {{provider}}: {{accounts}}",
+    "pool_segment": "{{name}} {{percent}}% của khoảng {{capacity}}",
+    "capacity_note": "Ước tính lấy token kể từ khi giới hạn đặt lại chia cho phần trăm đã dùng. Dùng ngoài proxy khiến dung lượng trông nhỏ hơn thực tế.",
+    "pool_unestimated_one": "{{count}} tài khoản không được tính: chưa có số liệu cho giới hạn này hoặc dùng dưới 5%.",
+    "pool_unestimated_other": "{{count}} tài khoản không được tính: chưa có số liệu cho giới hạn này hoặc dùng dưới 5%."
   }
 }

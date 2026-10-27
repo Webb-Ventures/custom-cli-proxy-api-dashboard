@@ -2522,6 +2522,18 @@
     "accounts_idle_one": "자격 증명 {{count}}개는 이 기간에 요청을 처리하지 않았습니다.",
     "accounts_idle_other": "자격 증명 {{count}}개는 이 기간에 요청을 처리하지 않았습니다.",
     "groups_show_all_one": "{{count}}개 모두 표시",
-    "groups_show_all_other": "{{count}}개 모두 표시"
+    "groups_show_all_other": "{{count}}개 모두 표시",
+    "capacity_used": "한도 사용량",
+    "capacity_left": "남은 토큰, 추정",
+    "capacity_per_percent": "이 한도의 1%당 약 {{tokens}} 토큰",
+    "capacity_too_early": "이 한도를 {{percent}}% 사용하면 추정합니다",
+    "capacity_pending": "아직 이름",
+    "pool_title": "추정 용량 사용량, {{window}}",
+    "pool_left": "{{percent}}%, 약 {{tokens}} 토큰({{value}}) 남음",
+    "pool_label": "{{provider}} 풀: {{accounts}}",
+    "pool_segment": "{{name}} 약 {{capacity}} 중 {{percent}}%",
+    "capacity_note": "추정치는 한도 재설정 이후 토큰을 사용 비율로 나눈 값입니다. 프록시 밖의 사용은 용량을 실제보다 작게 보이게 합니다.",
+    "pool_unestimated_one": "계정 {{count}}개는 제외됨: 이 한도의 측정값이 없거나 사용량이 5% 미만입니다.",
+    "pool_unestimated_other": "계정 {{count}}개는 제외됨: 이 한도의 측정값이 없거나 사용량이 5% 미만입니다."
   }
 }

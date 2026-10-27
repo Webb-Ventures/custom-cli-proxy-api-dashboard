@@ -2542,6 +2542,20 @@
     "groups_show_all_one": "Показать все ({{count}})",
     "groups_show_all_few": "Показать все ({{count}})",
     "groups_show_all_many": "Показать все ({{count}})",
-    "groups_show_all_other": "Показать все ({{count}})"
+    "groups_show_all_other": "Показать все ({{count}})",
+    "capacity_used": "Лимит использован",
+    "capacity_left": "Осталось токенов, оценка",
+    "capacity_per_percent": "Около {{tokens}} токенов на 1% лимита",
+    "capacity_too_early": "Оценка появится после {{percent}}% лимита",
+    "capacity_pending": "Рано",
+    "pool_title": "Оценка использованной ёмкости, {{window}}",
+    "pool_left": "{{percent}}%, осталось около {{tokens}} токенов ({{value}})",
+    "pool_label": "Пул {{provider}}: {{accounts}}",
+    "pool_segment": "{{name}}: {{percent}}% из примерно {{capacity}}",
+    "capacity_note": "Оценка: токены с момента сброса лимита, делённые на процент использования. Использование вне прокси занижает ёмкость.",
+    "pool_unestimated_one": "{{count}} аккаунт не учтён: нет данных по этому лимиту или использовано меньше 5%.",
+    "pool_unestimated_few": "{{count}} аккаунта не учтены: нет данных по этому лимиту или использовано меньше 5%.",
+    "pool_unestimated_many": "{{count}} аккаунтов не учтены: нет данных по этому лимиту или использовано меньше 5%.",
+    "pool_unestimated_other": "{{count}} аккаунтов не учтены: нет данных по этому лимиту или использовано меньше 5%."
   }
 }

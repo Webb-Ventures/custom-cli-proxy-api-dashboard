@@ -2522,6 +2522,18 @@
     "accounts_idle_one": "{{count}} more credential handled no requests in this range.",
     "accounts_idle_other": "{{count}} more credentials handled no requests in this range.",
     "groups_show_all_one": "Show all {{count}}",
-    "groups_show_all_other": "Show all {{count}}"
+    "groups_show_all_other": "Show all {{count}}",
+    "capacity_used": "Limit used",
+    "capacity_left": "Tokens left, est.",
+    "capacity_per_percent": "About {{tokens}} tokens per 1% of this limit",
+    "capacity_too_early": "Estimated once this limit is {{percent}}% used",
+    "capacity_pending": "Too early",
+    "pool_title": "Estimated capacity used, {{window}}",
+    "pool_left": "{{percent}}%, about {{tokens}} tokens ({{value}}) left",
+    "pool_label": "{{provider}} pool: {{accounts}}",
+    "pool_segment": "{{name}} {{percent}}% of about {{capacity}}",
+    "capacity_note": "Estimates divide tokens since the limit reset by the percent used. Use outside the proxy makes capacity look smaller than it is.",
+    "pool_unestimated_one": "{{count}} account isn't counted: no reading for this limit, or under 5% used.",
+    "pool_unestimated_other": "{{count}} accounts aren't counted: no reading for this limit, or under 5% used."
   }
 }

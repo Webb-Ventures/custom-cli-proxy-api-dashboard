@@ -2508,6 +2508,17 @@
     "blocks_more": "另有 {{count}} 个更早的区块未显示。",
     "provider_accounts": "{{count}} 个账号",
     "accounts_idle": "另有 {{count}} 个凭证在此范围内未处理请求。",
-    "groups_show_all": "显示全部 {{count}} 项"
+    "groups_show_all": "显示全部 {{count}} 项",
+    "capacity_used": "限额已用",
+    "capacity_left": "剩余 Token（估算）",
+    "capacity_per_percent": "此限额每 1% 约 {{tokens}} Token",
+    "capacity_too_early": "此限额用到 {{percent}}% 后开始估算",
+    "capacity_pending": "尚早",
+    "pool_title": "估算容量已用，{{window}}",
+    "pool_left": "{{percent}}%，约剩 {{tokens}} Token（{{value}}）",
+    "pool_label": "{{provider}} 资源池：{{accounts}}",
+    "pool_segment": "{{name}}：约 {{capacity}} 中已用 {{percent}}%",
+    "capacity_note": "估算方式：限额重置以来的 Token 除以已用百分比。代理之外的使用会让容量看起来偏小。",
+    "pool_unestimated": "{{count}} 个账号未计入：没有此限额的读数，或用量不足 5%。"
   }
 }

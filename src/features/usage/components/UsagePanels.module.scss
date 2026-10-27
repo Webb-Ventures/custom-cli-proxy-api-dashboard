@@ -333,6 +333,48 @@
   }
 }
 
+/* Estimated pool: one track per provider, a segment per account sized by its capacity. */
+.pool {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.poolCap {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px $spacing-md;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.poolCapValue {
+  font-family: $font-mono;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.poolBar {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+}
+
+.poolSegment {
+  flex-basis: 0;
+  min-width: 6px;
+  border-radius: $radius-sm;
+  background: var(--bg-tertiary);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+  }
+}
+
 /* ---------- Unavailable ---------- */
 
 .unavailable {

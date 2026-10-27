@@ -21,6 +21,7 @@ import { TokenClassTable } from './components/TokenClassTable';
 import { UsageUnavailable } from './components/UsageUnavailable';
 import { formatDay } from './format';
 import { usageVerdict } from './labels';
+import { useUsageCapacity } from './hooks/useUsageCapacity';
 import { useLedgerPlugin, useUsageCredentials, useUsageRangeData } from './hooks/useUsageLedger';
 import {
   MAX_RANGE_DAYS,
@@ -82,6 +83,14 @@ export function UsagePage() {
     const timer = window.setInterval(() => setReloadKey((key) => key + 1), LIVE_RELOAD_MS);
     return () => window.clearInterval(timer);
   }, [enabled, range.includesToday]);
+
+  const capacity = useUsageCapacity({
+    files,
+    prices: plugin.prices,
+    enabled: enabled && state.view !== 'overview',
+    now,
+    reloadKey,
+  });
 
   const overviewView = state.view === 'overview';
   const credentialFilter = overviewView ? state.credential : undefined;
@@ -377,13 +386,18 @@ export function UsagePage() {
                   />
                 </>
               ) : state.view === 'providers' ? (
-                <ProvidersView pools={pools} onSelectCredential={selectCredential} />
+                <ProvidersView
+                  pools={pools}
+                  capacity={capacity.byAuthIndex}
+                  onSelectCredential={selectCredential}
+                />
               ) : (
                 <section className={styles.panel}>
                   {accounts && accounts.accounts.length > 0 ? (
                     <AccountsTable
                       accounts={accounts.accounts}
                       showProvider
+                      capacity={capacity.byAuthIndex}
                       label={t('usage.accounts_label')}
                       onSelectCredential={selectCredential}
                     />
