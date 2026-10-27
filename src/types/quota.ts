@@ -218,6 +218,8 @@ export interface ClaudeQuotaState {
   observedAt?: string | null;
   stale?: boolean;
   planType?: string | null;
+  /** Organization `rate_limit_tier` from the profile, e.g. which Max tier. */
+  rateLimitTier?: string | null;
   error?: string;
   errorStatus?: number;
 }
